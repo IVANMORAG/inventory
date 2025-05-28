@@ -1,0 +1,756 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sushi y más... - Sistema de Inventarios</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+  <style>
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .fade-in { animation: fadeIn 0.3s ease-out; }
+    
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+    }
+    .pulse-animation { animation: pulse 2s infinite; }
+    
+    .glass-effect {
+      background: rgba(255, 255, 255, 0.25);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.18);
+    }
+    
+    .gradient-bg {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+    
+    .card-hover {
+      transition: all 0.3s ease;
+    }
+    .card-hover:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+    }
+  </style>
+</head>
+<body class="gradient-bg min-h-screen font-sans">
+  <!-- Login Section -->
+  <div id="login-section" class="min-h-screen flex items-center justify-center p-4">
+    <div class="glass-effect p-8 rounded-2xl shadow-2xl w-full max-w-md fade-in">
+      <div class="text-center mb-8">
+        <div class="text-6xl mb-4">🍣</div>
+        <h1 class="text-3xl font-bold text-white mb-2">Sushi y más...</h1>
+        <p class="text-white/70">Sistema de Inventarios</p>
+      </div>
+      <div class="mb-6">
+        <label class="block text-white/90 mb-2">Usuario</label>
+        <input id="username" type="text" class="w-full p-3 bg-white/20 border border-white/30 rounded-lg text-white placeholder-white/50 backdrop-blur-sm" placeholder="admin">
+      </div>
+      <div class="mb-6">
+        <label class="block text-white/90 mb-2">Contraseña</label>
+        <input id="password" type="password" class="w-full p-3 bg-white/20 border border-white/30 rounded-lg text-white placeholder-white/50 backdrop-blur-sm" placeholder="sushi123">
+      </div>
+      <button onclick="login()" class="w-full bg-gradient-to-r from-blue-500 to-purple-600 text-white p-3 rounded-lg hover:from-blue-600 hover:to-purple-700 transition-all duration-300 transform hover:scale-105">
+        Iniciar Sesión
+      </button>
+      <p id="login-error" class="text-red-300 text-center mt-4 hidden">Usuario o contraseña incorrectos</p>
+    </div>
+  </div>
+
+  <!-- Main Dashboard -->
+  <div id="dashboard" class="hidden min-h-screen">
+    <div class="container mx-auto p-4">
+      <!-- Header -->
+      <div class="flex justify-between items-center mb-8">
+        <div>
+          <h1 class="text-4xl font-bold text-white flex items-center">
+            <span class="text-5xl mr-3">🍣</span>
+            Sushi y más... - Inventario
+          </h1>
+          <p class="text-white/70 mt-2">Gestión de inventarios</p>
+        </div>
+        <div class="flex gap-3">
+          <div class="text-right text-white/80">
+            <div id="current-time" class="text-sm"></div>
+            <div id="current-date" class="text-xs"></div>
+          </div>
+          <button onclick="logout()" class="bg-red-500/80 backdrop-blur-sm text-white px-6 py-3 rounded-lg hover:bg-red-600 transition-all duration-300 transform hover:scale-105">
+            Cerrar Sesión
+          </button>
+        </div>
+      </div>
+
+      <!-- Stats Cards -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div class="glass-effect p-6 rounded-xl text-white card-hover">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-white/70">Total Productos</p>
+              <p id="total-products" class="text-3xl font-bold">0</p>
+            </div>
+            <div class="text-4xl">📦</div>
+          </div>
+        </div>
+        <div class="glass-effect p-6 rounded-xl text-white card-hover">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-white/70">Categorías</p>
+              <p id="total-categories" class="text-3xl font-bold">0</p>
+            </div>
+            <div class="text-4xl">🏷️</div>
+          </div>
+        </div>
+        <div class="glass-effect p-6 rounded-xl text-white card-hover">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-white/70">Stock Bajo</p>
+              <p id="low-stock-count" class="text-3xl font-bold text-red-300">0</p>
+            </div>
+            <div class="text-4xl">⚠️</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Navigation Tabs -->
+      <div class="glass-effect rounded-xl p-2 mb-8">
+        <div class="flex space-x-2">
+          <button onclick="showTab('categories')" id="tab-categories" class="tab-btn flex-1 py-3 px-6 rounded-lg text-white/70 hover:text-white transition-all duration-300">
+            🏷️ Categorías
+          </button>
+          <button onclick="showTab('products')" id="tab-products" class="tab-btn flex-1 py-3 px-6 rounded-lg text-white/70 hover:text-white transition-all duration-300">
+            📦 Productos
+          </button>
+          <button onclick="showTab('reports')" id="tab-reports" class="tab-btn flex-1 py-3 px-6 rounded-lg text-white/70 hover:text-white transition-all duration-300">
+            📊 Reportes
+          </button>
+          <button onclick="showTab('analytics')" id="tab-analytics" class="tab-btn flex-1 py-3 px-6 rounded-lg text-white/70 hover:text-white transition-all duration-300">
+            📈 Analytics
+          </button>
+        </div>
+      </div>
+
+      <!-- Categories Section -->
+      <div id="categories-section" class="tab-content">
+        <div class="glass-effect p-8 rounded-xl mb-6 card-hover">
+          <h2 class="text-2xl font-bold text-white mb-6 flex items-center">
+            <span class="text-3xl mr-3">🏷️</span>
+            Gestión de Categorías
+          </h2>
+          <div class="flex mb-6">
+            <input id="category-name" type="text" class="flex-1 p-3 bg-white/20 border border-white/30 rounded-l-lg text-white placeholder-white/50 backdrop-blur-sm" placeholder="Nombre de la categoría">
+            <button onclick="addCategory()" class="bg-green-500/80 backdrop-blur-sm text-white px-6 py-3 rounded-r-lg hover:bg-green-600 transition-all duration-300">
+              Agregar
+            </button>
+          </div>
+          <div id="category-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+        </div>
+      </div>
+
+      <!-- Products Section -->
+      <div id="products-section" class="tab-content hidden">
+        <div class="glass-effect p-8 rounded-xl mb-6 card-hover">
+          <h2 class="text-2xl font-bold text-white mb-6 flex items-center">
+            <span class="text-3xl mr-3">📦</span>
+            Gestión de Productos
+          </h2>
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+            <div>
+              <label class="block text-white/90 mb-2">Nombre del Producto</label>
+              <input id="product-name" type="text" class="w-full p-3 bg-white/20 border border-white/30 rounded-lg text-white placeholder-white/50 backdrop-blur-sm" placeholder="Ej. California Roll">
+            </div>
+            <div>
+              <label class="block text-white/90 mb-2">Categoría</label>
+              <select id="product-category" class="w-full p-3 bg-white/20 border border-white/30 rounded-lg text-white backdrop-blur-sm"></select>
+            </div>
+            <div>
+              <label class="block text-white/90 mb-2">Existencias</label>
+              <input id="product-stock" type="number" class="w-full p-3 bg-white/20 border border-white/30 rounded-lg text-white placeholder-white/50 backdrop-blur-sm" placeholder="0">
+            </div>
+            <div>
+              <label class="block text-white/90 mb-2">Stock Mínimo</label>
+              <input id="product-min-stock" type="number" class="w-full p-3 bg-white/20 border border-white/30 rounded-lg text-white placeholder-white/50 backdrop-blur-sm" placeholder="5">
+            </div>
+            <div>
+              <label class="block text-white/90 mb-2">Descripción</label>
+              <input id="product-description" type="text" class="w-full p-3 bg-white/20 border border-white/30 rounded-lg text-white placeholder-white/50 backdrop-blur-sm" placeholder="Descripción">
+            </div>
+          </div>
+          <button onclick="addProduct()" class="bg-green-500/80 backdrop-blur-sm text-white px-6 py-3 rounded-lg hover:bg-green-600 transition-all duration-300 transform hover:scale-105">
+            Agregar Producto
+          </button>
+          
+          <!-- Search and Filter -->
+          <div class="flex gap-4 mt-6 mb-4">
+            <input id="search-products" type="text" placeholder="Buscar productos..." class="flex-1 p-3 bg-white/20 border border-white/30 rounded-lg text-white placeholder-white/50 backdrop-blur-sm" oninput="filterProducts()">
+            <select id="filter-category" class="p-3 bg-white/20 border border-white/30 rounded-lg text-white backdrop-blur-sm" onchange="filterProducts()">
+              <option value="">Todas las categorías</option>
+            </select>
+          </div>
+          
+          <div id="product-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+        </div>
+      </div>
+
+      <!-- Reports Section -->
+      <div id="reports-section" class="tab-content hidden">
+        <div class="glass-effect p-8 rounded-xl mb-6 card-hover">
+          <h2 class="text-2xl font-bold text-white mb-6 flex items-center">
+            <span class="text-3xl mr-3">📊</span>
+            Reportes
+          </h2>
+          <div class="flex gap-4 mb-6">
+            <select id="report-filter" class="p-3 bg-white/20 border border-white/30 rounded-lg text-white backdrop-blur-sm">
+              <option value="all">Todos los Productos</option>
+              <option value="low-stock">Stock Bajo</option>
+              <option value="no-stock">Sin Stock</option>
+            </select>
+            <button onclick="generateReport()" class="bg-blue-500/80 backdrop-blur-sm text-white px-6 py-3 rounded-lg hover:bg-blue-600 transition-all duration-300">
+              Generar Reporte
+            </button>
+            <button onclick="downloadPDF()" class="bg-red-500/80 backdrop-blur-sm text-white px-6 py-3 rounded-lg hover:bg-red-600 transition-all duration-300">
+              📄 Descargar PDF
+            </button>
+          </div>
+          <div class="overflow-x-auto">
+            <table id="report-table" class="w-full glass-effect rounded-lg overflow-hidden">
+              <thead>
+                <tr class="bg-white/20">
+                  <th class="p-4 text-left text-white">Producto</th>
+                  <th class="p-4 text-left text-white">Categoría</th>
+                  <th class="p-4 text-left text-white">Stock</th>
+                  <th class="p-4 text-left text-white">Descripción</th>
+                  <th class="p-4 text-left text-white">Estado</th>
+                </tr>
+              </thead>
+              <tbody id="report-body" class="text-white/90"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Analytics Section -->
+      <div id="analytics-section" class="tab-content hidden">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div class="glass-effect p-8 rounded-xl card-hover">
+            <h3 class="text-xl font-bold text-white mb-4">Distribución por Categoría</h3>
+            <canvas id="categoryChart" width="400" height="200"></canvas>
+          </div>
+          <div class="glass-effect p-8 rounded-xl card-hover">
+            <h3 class="text-xl font-bold text-white mb-4">Estado del Inventario</h3>
+            <canvas id="stockChart" width="400" height="200"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Notifications -->
+  <div id="notifications" class="fixed top-4 right-4 z-50"></div>
+
+  <script>
+    // Initialize LocalStorage
+    if (!localStorage.getItem('admin')) {
+      localStorage.setItem('admin', JSON.stringify({ username: 'admin', password: 'sushi123' }));
+    }
+    if (!localStorage.getItem('categories')) {
+      localStorage.setItem('categories', JSON.stringify([]));
+    }
+    if (!localStorage.getItem('products')) {
+      localStorage.setItem('products', JSON.stringify([]));
+    }
+
+    let currentTab = 'categories';
+
+    // Check if user is logged in
+    const isLoggedIn = () => !!localStorage.getItem('loggedIn');
+    if (isLoggedIn()) {
+      document.getElementById('login-section').classList.add('hidden');
+      document.getElementById('dashboard').classList.remove('hidden');
+      loadData();
+    }
+
+    // Update time
+    function updateTime() {
+      const now = new Date();
+      document.getElementById('current-time').textContent = now.toLocaleTimeString();
+      document.getElementById('current-date').textContent = now.toLocaleDateString();
+    }
+    setInterval(updateTime, 1000);
+
+    function showNotification(message, type = 'success') {
+      const notification = document.createElement('div');
+      notification.className = `glass-effect p-4 rounded-lg text-white mb-2 fade-in ${type === 'error' ? 'bg-red-500/50' : 'bg-green-500/50'}`;
+      notification.textContent = message;
+      document.getElementById('notifications').appendChild(notification);
+      
+      setTimeout(() => {
+        notification.remove();
+      }, 3000);
+    }
+
+    function login() {
+      const username = document.getElementById('username').value;
+      const password = document.getElementById('password').value;
+      const admin = JSON.parse(localStorage.getItem('admin'));
+
+      if (username === admin.username && password === admin.password) {
+        localStorage.setItem('loggedIn', 'true');
+        document.getElementById('login-section').classList.add('hidden');
+        document.getElementById('dashboard').classList.remove('hidden');
+        loadData();
+        showNotification('¡Bienvenido al sistema!');
+      } else {
+        document.getElementById('login-error').classList.remove('hidden');
+      }
+    }
+
+    function logout() {
+      localStorage.removeItem('loggedIn');
+      document.getElementById('login-section').classList.remove('hidden');
+      document.getElementById('dashboard').classList.add('hidden');
+      document.getElementById('login-error').classList.add('hidden');
+      document.getElementById('username').value = '';
+      document.getElementById('password').value = '';
+    }
+
+    function showTab(tabName) {
+      document.querySelectorAll('.tab-content').forEach(tab => tab.classList.add('hidden'));
+      document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.classList.remove('bg-white/20', 'text-white');
+        btn.classList.add('text-white/70');
+      });
+      
+      document.getElementById(`${tabName}-section`).classList.remove('hidden');
+      document.getElementById(`tab-${tabName}`).classList.add('bg-white/20', 'text-white');
+      document.getElementById(`tab-${tabName}`).classList.remove('text-white/70');
+      
+      currentTab = tabName;
+      
+      if (tabName === 'analytics') {
+        setTimeout(updateCharts, 100);
+      }
+    }
+
+    function addCategory() {
+      const name = document.getElementById('category-name').value.trim();
+      if (!name) {
+        showNotification('Por favor, ingresa un nombre para la categoría.', 'error');
+        return;
+      }
+      
+      const categories = JSON.parse(localStorage.getItem('categories'));
+      categories.push({ id: Date.now(), name });
+      localStorage.setItem('categories', JSON.stringify(categories));
+      document.getElementById('category-name').value = '';
+      loadCategories();
+      updateStats();
+      showNotification('Categoría agregada exitosamente.');
+    }
+
+    function loadCategories() {
+      const categories = JSON.parse(localStorage.getItem('categories'));
+      const categoryList = document.getElementById('category-list');
+      const categorySelect = document.getElementById('product-category');
+      const filterSelect = document.getElementById('filter-category');
+      
+      categoryList.innerHTML = '';
+      categorySelect.innerHTML = '<option value="">Selecciona una categoría</option>';
+      filterSelect.innerHTML = '<option value="">Todas las categorías</option>';
+
+      categories.forEach(category => {
+        const div = document.createElement('div');
+        div.className = 'glass-effect p-4 rounded-lg card-hover';
+        div.innerHTML = `
+          <div class="flex justify-between items-center text-white">
+            <span class="font-semibold">${category.name}</span>
+            <button onclick="deleteCategory(${category.id})" class="text-red-300 hover:text-red-100 transition-colors">
+              🗑️
+            </button>
+          </div>
+        `;
+        categoryList.appendChild(div);
+
+        const option = document.createElement('option');
+        option.value = category.id;
+        option.textContent = category.name;
+        categorySelect.appendChild(option);
+        
+        const filterOption = document.createElement('option');
+        filterOption.value = category.id;
+        filterOption.textContent = category.name;
+        filterSelect.appendChild(filterOption);
+      });
+    }
+
+    function deleteCategory(id) {
+      if (!confirm('¿Estás seguro de eliminar esta categoría? Los productos asociados también se eliminarán.')) return;
+      
+      let categories = JSON.parse(localStorage.getItem('categories'));
+      categories = categories.filter(cat => cat.id !== id);
+      localStorage.setItem('categories', JSON.stringify(categories));
+
+      let products = JSON.parse(localStorage.getItem('products'));
+      products = products.filter(prod => prod.categoryId !== id);
+      localStorage.setItem('products', JSON.stringify(products));
+      
+      loadCategories();
+      loadProducts();
+      updateStats();
+      showNotification('Categoría eliminada exitosamente.');
+    }
+
+    function addProduct() {
+      const name = document.getElementById('product-name').value.trim();
+      const categoryId = parseInt(document.getElementById('product-category').value);
+      const stock = parseInt(document.getElementById('product-stock').value);
+      const minStock = parseInt(document.getElementById('product-min-stock').value) || 5;
+      const description = document.getElementById('product-description').value.trim();
+
+      if (!name || !categoryId || isNaN(stock) || stock < 0) {
+        showNotification('Por favor, completa todos los campos correctamente. Las existencias no pueden ser negativas.', 'error');
+        return;
+      }
+
+      const products = JSON.parse(localStorage.getItem('products'));
+      products.push({ 
+        id: Date.now(), 
+        name, 
+        categoryId, 
+        stock, 
+        minStock, 
+        description
+      });
+
+      localStorage.setItem('products', JSON.stringify(products));
+
+      document.getElementById('product-name').value = '';
+      document.getElementById('product-category').value = '';
+      document.getElementById('product-stock').value = '';
+      document.getElementById('product-min-stock').value = '';
+      document.getElementById('product-description').value = '';
+      
+      loadProducts();
+      updateStats();
+      showNotification('Producto agregado exitosamente.');
+    }
+
+    function loadProducts() {
+      filterProducts();
+    }
+
+    function filterProducts() {
+      const searchTerm = document.getElementById('search-products').value.toLowerCase();
+      const categoryFilter = document.getElementById('filter-category').value;
+      const productList = document.getElementById('product-list');
+      
+      const products = JSON.parse(localStorage.getItem('products'));
+      const categories = JSON.parse(localStorage.getItem('categories'));
+      
+      productList.innerHTML = '';
+
+      let filteredProducts = products.filter(product => {
+        const matchesSearch = product.name.toLowerCase().includes(searchTerm) || 
+                            (product.description && product.description.toLowerCase().includes(searchTerm));
+        const matchesCategory = !categoryFilter || product.categoryId == categoryFilter;
+        return matchesSearch && matchesCategory;
+      });
+
+      filteredProducts.forEach(product => {
+        const category = categories.find(cat => cat.id === product.categoryId);
+        const categoryName = category ? category.name : 'Sin categoría';
+        const isLowStock = product.stock <= product.minStock;
+        
+        const div = document.createElement('div');
+        div.className = `glass-effect p-6 rounded-lg card-hover ${isLowStock ? 'ring-2 ring-red-400 pulse-animation' : ''}`;
+        div.innerHTML = `
+          <div class="text-white">
+            <div class="flex justify-between items-start mb-3">
+              <h3 class="font-bold text-lg">${product.name}</h3>
+              <span class="text-xs bg-white/20 px-2 py-1 rounded">${categoryName}</span>
+            </div>
+            <div class="grid grid-cols-2 gap-2 text-sm mb-4">
+              <div>Stock: <span class="${isLowStock ? 'text-red-300 font-bold' : 'text-green-300'}">${product.stock}</span></div>
+              <div>Mín: ${product.minStock}</div>
+            </div>
+            ${product.description ? `<p class="text-white/70 text-sm mb-4">${product.description}</p>` : ''}
+            ${isLowStock ? '<div class="bg-red-500/50 text-white text-xs p-2 rounded mb-4">⚠️ Stock Bajo</div>' : ''}
+            <div class="flex gap-2">
+              <button onclick="updateStock(${product.id}, 1)" class="bg-green-500/80 text-white px-3 py-1 rounded text-sm hover:bg-green-600 transition-colors">+1</button>
+              <button onclick="updateStock(${product.id}, -1)" class="bg-blue-500/80 text-white px-3 py-1 rounded text-sm hover:bg-blue-600 transition-colors">-1</button>
+              <button onclick="deleteProduct(${product.id})" class="bg-red-500/80 text-white px-3 py-1 rounded text-sm hover:bg-red-600 transition-colors">🗑️</button>
+            </div>
+          </div>
+        `;
+        productList.appendChild(div);
+      });
+    }
+
+    function updateStock(id, change) {
+      const products = JSON.parse(localStorage.getItem('products'));
+      const product = products.find(prod => prod.id === id);
+      const newStock = product.stock + change;
+
+      if (newStock < 0) {
+        showNotification('Las existencias no pueden ser negativas.', 'error');
+        return;
+      }
+
+      product.stock = newStock;
+      localStorage.setItem('products', JSON.stringify(products));
+      loadProducts();
+      updateStats();
+      
+      if (product.stock <= product.minStock) {
+        showNotification(`¡Alerta! El producto "${product.name}" tiene stock bajo (${product.stock}).`, 'error');
+      }
+    }
+
+    function deleteProduct(id) {
+      if (!confirm('¿Estás seguro de eliminar este producto?')) return;
+      
+      let products = JSON.parse(localStorage.getItem('products'));
+      products = products.filter(prod => prod.id !== id);
+      localStorage.setItem('products', JSON.stringify(products));
+      loadProducts();
+      updateStats();
+      showNotification('Producto eliminado exitosamente.');
+    }
+
+    function updateStats() {
+      const products = JSON.parse(localStorage.getItem('products'));
+      const categories = JSON.parse(localStorage.getItem('categories'));
+      const totalProducts = products.length;
+      const totalCategories = categories.length;
+      const lowStockProducts = products.filter(p => p.stock <= p.minStock).length;
+
+      document.getElementById('total-products').textContent = totalProducts;
+      document.getElementById('total-categories').textContent = totalCategories;
+      document.getElementById('low-stock-count').textContent = lowStockProducts;
+    }
+
+    function generateReport() {
+      const filter = document.getElementById('report-filter').value;
+      const reportBody = document.getElementById('report-body');
+      reportBody.innerHTML = '';
+
+      const products = JSON.parse(localStorage.getItem('products'));
+      const categories = JSON.parse(localStorage.getItem('categories'));
+      
+      let filteredProducts = products;
+      
+      switch(filter) {
+        case 'low-stock':
+          filteredProducts = products.filter(p => p.stock <= p.minStock);
+          break;
+        case 'no-stock':
+          filteredProducts = products.filter(p => p.stock === 0);
+          break;
+      }
+
+      filteredProducts.forEach(product => {
+        const category = categories.find(cat => cat.id === product.categoryId);
+        const categoryName = category ? category.name : 'Sin categoría';
+        const isLowStock = product.stock <= product.minStock;
+        
+        const row = document.createElement('tr');
+        row.className = 'border-b border-white/10';
+        row.innerHTML = `
+          <td class="p-4">${product.name}</td>
+          <td class="p-4">${categoryName}</td>
+          <td class="p-4 ${isLowStock ? 'text-red-300 font-bold' : ''}">${product.stock}</td>
+          <td class="p-4">${product.description || 'N/A'}</td>
+          <td class="p-4">
+            <span class="px-2 py-1 rounded text-xs ${product.stock === 0 ? 'bg-gray-500/50' : isLowStock ? 'bg-red-500/50' : 'bg-green-500/50'}">
+              ${product.stock === 0 ? 'Sin Stock' : isLowStock ? 'Stock Bajo' : 'Normal'}
+            </span>
+          </td>
+        `;
+        reportBody.appendChild(row);
+      });
+    }
+
+    function downloadPDF() {
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF();
+      
+      doc.setFontSize(20);
+      doc.text('Sushi y más... - Reporte de Inventario', 20, 20);
+      
+      doc.setFontSize(12);
+      doc.text(`Fecha: ${new Date().toLocaleDateString()}`, 20, 35);
+      doc.text(`Hora: ${new Date().toLocaleTimeString()}`, 20, 45);
+      
+      const products = JSON.parse(localStorage.getItem('products'));
+      const categories = JSON.parse(localStorage.getItem('categories'));
+      const totalProducts = products.length;
+      const lowStockProducts = products.filter(p => p.stock <= p.minStock).length;
+      
+      doc.setFontSize(14);
+      doc.text('Resumen Ejecutivo:', 20, 65);
+      doc.setFontSize(11);
+      doc.text(`Total de Productos: ${totalProducts}`, 30, 75);
+      doc.text(`Productos con Stock Bajo: ${lowStockProducts}`, 30, 85);
+      
+      const filter = document.getElementById('report-filter').value;
+      let filteredProducts = products;
+      
+      switch(filter) {
+        case 'low-stock':
+          filteredProducts = products.filter(p => p.stock <= p.minStock);
+          break;
+        case 'no-stock':
+          filteredProducts = products.filter(p => p.stock === 0);
+          break;
+      }
+      
+      const tableData = filteredProducts.map(product => {
+        const category = categories.find(cat => cat.id === product.categoryId);
+        const categoryName = category ? category.name : 'Sin categoría';
+        const status = product.stock === 0 ? 'Sin Stock' : 
+                      product.stock <= product.minStock ? 'Stock Bajo' : 'Normal';
+        
+        return [
+          product.name,
+          categoryName,
+          product.stock.toString(),
+          product.description || 'N/A',
+          status
+        ];
+      });
+      
+      doc.autoTable({
+        head: [['Producto', 'Categoría', 'Stock', 'Descripción', 'Estado']],
+        body: tableData,
+        startY: 100,
+        styles: {
+          fontSize: 9,
+          cellPadding: 3
+        },
+        headStyles: {
+          fillColor: [52, 73, 185],
+          textColor: 255
+        },
+        alternateRowStyles: {
+          fillColor: [245, 245, 245]
+        },
+        columnStyles: {
+          2: { halign: 'center' },
+          4: { halign: 'center' }
+        }
+      });
+      
+      const finalY = doc.lastAutoTable.finalY || 100;
+      doc.setFontSize(10);
+      doc.text('Generado por Sistema de Inventarios - Sushi y más...', 20, finalY + 20);
+      
+      doc.save(`inventario_sushi_${new Date().toISOString().split('T')[0]}.pdf`);
+      showNotification('¡Reporte PDF generado exitosamente!');
+    }
+
+    function updateCharts() {
+      updateCategoryChart();
+      updateStockChart();
+    }
+
+    function updateCategoryChart() {
+      const ctx = document.getElementById('categoryChart').getContext('2d');
+      
+      const products = JSON.parse(localStorage.getItem('products'));
+      const categories = JSON.parse(localStorage.getItem('categories'));
+      
+      const categoryData = {};
+      categories.forEach(cat => {
+        categoryData[cat.name] = products.filter(p => p.categoryId === cat.id).length;
+      });
+      
+      new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+          labels: Object.keys(categoryData),
+          datasets: [{
+            data: Object.values(categoryData),
+            backgroundColor: [
+              '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', 
+              '#9966FF', '#FF9F40', '#FF6384', '#C9CBCF'
+            ],
+            borderWidth: 0
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: {
+              labels: {
+                color: 'white'
+              }
+            }
+          }
+        }
+      });
+    }
+
+    function updateStockChart() {
+      const ctx = document.getElementById('stockChart').getContext('2d');
+      
+      const products = JSON.parse(localStorage.getItem('products'));
+      const normalStock = products.filter(p => p.stock > p.minStock).length;
+      const lowStock = products.filter(p => p.stock <= p.minStock && p.stock > 0).length;
+      const noStock = products.filter(p => p.stock === 0).length;
+      
+      new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: ['Stock Normal', 'Stock Bajo', 'Sin Stock'],
+          datasets: [{
+            data: [normalStock, lowStock, noStock],
+            backgroundColor: ['#4CAF50', '#FF9800', '#F44336'],
+            borderWidth: 0
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: {
+              display: false
+            }
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              ticks: {
+                color: 'white'
+              },
+              grid: {
+                color: 'rgba(255,255,255,0.1)'
+              }
+            },
+            x: {
+              ticks: {
+                color: 'white'
+              },
+              grid: {
+                color: 'rgba(255,255,255,0.1)'
+              }
+            }
+          }
+        }
+      });
+    }
+
+    function loadData() {
+      loadCategories();
+      loadProducts();
+      updateStats();
+      showTab('categories');
+      updateTime();
+    }
+  </script>
+</body>
+</html>
