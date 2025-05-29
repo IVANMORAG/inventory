@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Sushi y más... - Sistema de Inventarios</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
@@ -79,7 +80,7 @@
         <div class="flex gap-3">
           <div class="text-right text-white/80">
             <div id="current-time" class="text-sm"></div>
-            <div id="current-date" class="text-xs"></div>
+            <div id "current-date" class="text-xs"></div>
           </div>
           <button onclick="logout()" class="bg-red-500/80 backdrop-blur-sm text-white px-6 py-3 rounded-lg hover:bg-red-600 transition-all duration-300 transform hover:scale-105">
             Cerrar Sesión
@@ -132,6 +133,9 @@
           </button>
           <button onclick="showTab('analytics')" id="tab-analytics" class="tab-btn flex-1 py-3 px-6 rounded-lg text-white/70 hover:text-white transition-all duration-300">
             📈 Analytics
+          </button>
+          <button onclick="showTab('weekly-reports')" id="tab-weekly-reports" class="tab-btn flex-1 py-3 px-6 rounded-lg text-white/70 hover:text-white transition-all duration-300">
+            📅 Reportes Semanales
           </button>
         </div>
       </div>
@@ -248,6 +252,17 @@
           </div>
         </div>
       </div>
+
+      <!-- Weekly Reports Section -->
+      <div id="weekly-reports-section" class="tab-content hidden">
+        <div class="glass-effect p-8 rounded-xl mb-6 card-hover">
+          <h2 class="text-2xl font-bold text-white mb-6 flex items-center">
+            <span class="text-3xl mr-3">📅</span>
+            Reportes Semanales
+          </h2>
+          <div id="weekly-reports-list"></div>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -255,16 +270,15 @@
   <div id="notifications" class="fixed top-4 right-4 z-50"></div>
 
   <script>
-    // Initialize LocalStorage
-    if (!localStorage.getItem('admin')) {
-      localStorage.setItem('admin', JSON.stringify({ username: 'admin', password: 'sushi123' }));
+    // Inicializar Supabase
+    if (typeof supabase === 'undefined') {
+      console.error('La librería de Supabase no se cargó correctamente.');
+      showNotification('Error: No se pudo cargar Supabase. Verifica la conexión al CDN.', 'error');
     }
-    if (!localStorage.getItem('categories')) {
-      localStorage.setItem('categories', JSON.stringify([]));
-    }
-    if (!localStorage.getItem('products')) {
-      localStorage.setItem('products', JSON.stringify([]));
-    }
+
+    const supabaseUrl = 'https://rvpvhkiwmylyysaeyght.supabase.co';
+    const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ2cHZoa2l3bXlseXlzYWV5Z2h0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDg0NzY1MjksImV4cCI6MjA2NDA1MjUyOX0.rSLaSbOhsLDYBMS3T0kj_7ZDVZl0IsepLneOcF39rqY';
+    const supabase = supabase.createClient(supabaseUrl, supabaseKey);
 
     let currentTab = 'categories';
 
@@ -295,20 +309,28 @@
       }, 3000);
     }
 
-    function login() {
+    async function login() {
       const username = document.getElementById('username').value;
       const password = document.getElementById('password').value;
-      const admin = JSON.parse(localStorage.getItem('admin'));
 
-      if (username === admin.username && password === admin.password) {
-        localStorage.setItem('loggedIn', 'true');
-        document.getElementById('login-section').classList.add('hidden');
-        document.getElementById('dashboard').classList.remove('hidden');
-        loadData();
-        showNotification('¡Bienvenido al sistema!');
-      } else {
+      const { data, error } = await supabase
+        .from('users')
+        .select('*')
+        .eq('username', username)
+        .eq('password', password)
+        .single();
+
+      if (error || !data) {
         document.getElementById('login-error').classList.remove('hidden');
+        showNotification('Usuario o contraseña incorrectos.', 'error');
+        return;
       }
+
+      localStorage.setItem('loggedIn', 'true');
+      document.getElementById('login-section').classList.add('hidden');
+      document.getElementById('dashboard').classList.remove('hidden');
+      loadData();
+      showNotification('¡Bienvenido al sistema!');
     }
 
     function logout() {
@@ -335,27 +357,43 @@
       
       if (tabName === 'analytics') {
         setTimeout(updateCharts, 100);
+      } else if (tabName === 'weekly-reports') {
+        loadWeeklyReports();
       }
     }
 
-    function addCategory() {
+    async function addCategory() {
       const name = document.getElementById('category-name').value.trim();
       if (!name) {
         showNotification('Por favor, ingresa un nombre para la categoría.', 'error');
         return;
       }
       
-      const categories = JSON.parse(localStorage.getItem('categories'));
-      categories.push({ id: Date.now(), name });
-      localStorage.setItem('categories', JSON.stringify(categories));
+      const { error } = await supabase
+        .from('categories')
+        .insert([{ name }]);
+      
+      if (error) {
+        showNotification('Error al agregar categoría: ' + error.message, 'error');
+        return;
+      }
+      
       document.getElementById('category-name').value = '';
       loadCategories();
       updateStats();
       showNotification('Categoría agregada exitosamente.');
     }
 
-    function loadCategories() {
-      const categories = JSON.parse(localStorage.getItem('categories'));
+    async function loadCategories() {
+      const { data: categories, error } = await supabase
+        .from('categories')
+        .select('*');
+      
+      if (error) {
+        showNotification('Error al cargar categorías: ' + error.message, 'error');
+        return;
+      }
+      
       const categoryList = document.getElementById('category-list');
       const categorySelect = document.getElementById('product-category');
       const filterSelect = document.getElementById('filter-category');
@@ -389,16 +427,18 @@
       });
     }
 
-    function deleteCategory(id) {
+    async function deleteCategory(id) {
       if (!confirm('¿Estás seguro de eliminar esta categoría? Los productos asociados también se eliminarán.')) return;
       
-      let categories = JSON.parse(localStorage.getItem('categories'));
-      categories = categories.filter(cat => cat.id !== id);
-      localStorage.setItem('categories', JSON.stringify(categories));
-
-      let products = JSON.parse(localStorage.getItem('products'));
-      products = products.filter(prod => prod.categoryId !== id);
-      localStorage.setItem('products', JSON.stringify(products));
+      const { error } = await supabase
+        .from('categories')
+        .delete()
+        .eq('id', id);
+      
+      if (error) {
+        showNotification('Error al eliminar categoría: ' + error.message, 'error');
+        return;
+      }
       
       loadCategories();
       loadProducts();
@@ -406,7 +446,7 @@
       showNotification('Categoría eliminada exitosamente.');
     }
 
-    function addProduct() {
+    async function addProduct() {
       const name = document.getElementById('product-name').value.trim();
       const categoryId = parseInt(document.getElementById('product-category').value);
       const stock = parseInt(document.getElementById('product-stock').value);
@@ -418,17 +458,14 @@
         return;
       }
 
-      const products = JSON.parse(localStorage.getItem('products'));
-      products.push({ 
-        id: Date.now(), 
-        name, 
-        categoryId, 
-        stock, 
-        minStock, 
-        description
-      });
-
-      localStorage.setItem('products', JSON.stringify(products));
+      const { error } = await supabase
+        .from('products')
+        .insert([{ name, category_id: categoryId, stock, min_stock: minStock, description }]);
+      
+      if (error) {
+        showNotification('Error al agregar producto: ' + error.message, 'error');
+        return;
+      }
 
       document.getElementById('product-name').value = '';
       document.getElementById('product-category').value = '';
@@ -441,31 +478,36 @@
       showNotification('Producto agregado exitosamente.');
     }
 
-    function loadProducts() {
+    async function loadProducts() {
       filterProducts();
     }
 
-    function filterProducts() {
+    async function filterProducts() {
       const searchTerm = document.getElementById('search-products').value.toLowerCase();
       const categoryFilter = document.getElementById('filter-category').value;
       const productList = document.getElementById('product-list');
       
-      const products = JSON.parse(localStorage.getItem('products'));
-      const categories = JSON.parse(localStorage.getItem('categories'));
+      const { data: products, error: productError } = await supabase
+        .from('products')
+        .select('*, categories(name)');
       
+      if (productError) {
+        showNotification('Error al cargar productos: ' + productError.message, 'error');
+        return;
+      }
+
       productList.innerHTML = '';
 
       let filteredProducts = products.filter(product => {
         const matchesSearch = product.name.toLowerCase().includes(searchTerm) || 
-                            (product.description && product.description.toLowerCase().includes(searchTerm));
-        const matchesCategory = !categoryFilter || product.categoryId == categoryFilter;
+                             (product.description && product.description.toLowerCase().includes(searchTerm));
+        const matchesCategory = !categoryFilter || product.category_id == categoryFilter;
         return matchesSearch && matchesCategory;
       });
 
       filteredProducts.forEach(product => {
-        const category = categories.find(cat => cat.id === product.categoryId);
-        const categoryName = category ? category.name : 'Sin categoría';
-        const isLowStock = product.stock <= product.minStock;
+        const categoryName = product.categories?.name || 'Sin categoría';
+        const isLowStock = product.stock <= product.min_stock;
         
         const div = document.createElement('div');
         div.className = `glass-effect p-6 rounded-lg card-hover ${isLowStock ? 'ring-2 ring-red-400 pulse-animation' : ''}`;
@@ -477,7 +519,7 @@
             </div>
             <div class="grid grid-cols-2 gap-2 text-sm mb-4">
               <div>Stock: <span class="${isLowStock ? 'text-red-300 font-bold' : 'text-green-300'}">${product.stock}</span></div>
-              <div>Mín: ${product.minStock}</div>
+              <div>Mín: ${product.min_stock}</div>
             </div>
             ${product.description ? `<p class="text-white/70 text-sm mb-4">${product.description}</p>` : ''}
             ${isLowStock ? '<div class="bg-red-500/50 text-white text-xs p-2 rounded mb-4">⚠️ Stock Bajo</div>' : ''}
@@ -492,62 +534,101 @@
       });
     }
 
-    function updateStock(id, change) {
-      const products = JSON.parse(localStorage.getItem('products'));
-      const product = products.find(prod => prod.id === id);
-      const newStock = product.stock + change;
+    async function updateStock(id, change) {
+      const { data: product, error: fetchError } = await supabase
+        .from('products')
+        .select('*')
+        .eq('id', id)
+        .single();
+      
+      if (fetchError) {
+        showNotification('Error al obtener producto: ' + fetchError.message, 'error');
+        return;
+      }
 
+      const newStock = product.stock + change;
       if (newStock < 0) {
         showNotification('Las existencias no pueden ser negativas.', 'error');
         return;
       }
 
-      product.stock = newStock;
-      localStorage.setItem('products', JSON.stringify(products));
+      const { error } = await supabase
+        .from('products')
+        .update({ stock: newStock })
+        .eq('id', id);
+      
+      if (error) {
+        showNotification('Error al actualizar stock: ' + error.message, 'error');
+        return;
+      }
+      
       loadProducts();
       updateStats();
       
-      if (product.stock <= product.minStock) {
-        showNotification(`¡Alerta! El producto "${product.name}" tiene stock bajo (${product.stock}).`, 'error');
+      if (newStock <= product.min_stock) {
+        showNotification(`¡Alerta! El producto "${product.name}" tiene stock bajo (${newStock}).`, 'error');
       }
     }
 
-    function deleteProduct(id) {
+    async function deleteProduct(id) {
       if (!confirm('¿Estás seguro de eliminar este producto?')) return;
       
-      let products = JSON.parse(localStorage.getItem('products'));
-      products = products.filter(prod => prod.id !== id);
-      localStorage.setItem('products', JSON.stringify(products));
+      const { error } = await supabase
+        .from('products')
+        .delete()
+        .eq('id', id);
+      
+      if (error) {
+        showNotification('Error al eliminar producto: ' + error.message, 'error');
+        return;
+      }
+      
       loadProducts();
       updateStats();
       showNotification('Producto eliminado exitosamente.');
     }
 
-    function updateStats() {
-      const products = JSON.parse(localStorage.getItem('products'));
-      const categories = JSON.parse(localStorage.getItem('categories'));
+    async function updateStats() {
+      const { data: products, error: productError } = await supabase
+        .from("products")
+        .select('*');
+      const { data: categories, error: categoryError } = await supabase
+        .from('categories')
+        .select('*');
+      
+      if (productError || categoryError) {
+        showNotification('Error al cargar estadísticas: ' + (productError?.message || categoryError?.message), 'error');
+        return;
+      }
+
       const totalProducts = products.length;
       const totalCategories = categories.length;
-      const lowStockProducts = products.filter(p => p.stock <= p.minStock).length;
+      const lowStockProducts = products.filter(p => p.stock <= p.min_stock).length;
 
       document.getElementById('total-products').textContent = totalProducts;
       document.getElementById('total-categories').textContent = totalCategories;
       document.getElementById('low-stock-count').textContent = lowStockProducts;
     }
 
-    function generateReport() {
+    async function generateReport() {
       const filter = document.getElementById('report-filter').value;
       const reportBody = document.getElementById('report-body');
       reportBody.innerHTML = '';
 
-      const products = JSON.parse(localStorage.getItem('products'));
-      const categories = JSON.parse(localStorage.getItem('categories'));
+      const { data: products, error: productError } = await supabase
+        .from('products')
+        .select('*, categories(name)');
+      
+      if (productError) {
+        showNotification('Error al generar reporte: ' + productError.message, 'error');
+        return;
+      }
       
       let filteredProducts = products;
       
       switch(filter) {
         case 'low-stock':
-          filteredProducts = products.filter(p => p.stock <= p.minStock);
+          filteredProducts = products.filter(p => p.stock <= p.min_stock);
           break;
         case 'no-stock':
           filteredProducts = products.filter(p => p.stock === 0);
@@ -555,9 +636,8 @@
       }
 
       filteredProducts.forEach(product => {
-        const category = categories.find(cat => cat.id === product.categoryId);
-        const categoryName = category ? category.name : 'Sin categoría';
-        const isLowStock = product.stock <= product.minStock;
+        const categoryName = product.categories?.name || 'Sin categoría';
+        const isLowStock = product.stock <= product.min_stock;
         
         const row = document.createElement('tr');
         row.className = 'border-b border-white/10';
@@ -576,7 +656,7 @@
       });
     }
 
-    function downloadPDF() {
+    async function downloadPDF() {
       const { jsPDF } = window.jspdf;
       const doc = new jsPDF();
       
@@ -587,10 +667,20 @@
       doc.text(`Fecha: ${new Date().toLocaleDateString()}`, 20, 35);
       doc.text(`Hora: ${new Date().toLocaleTimeString()}`, 20, 45);
       
-      const products = JSON.parse(localStorage.getItem('products'));
-      const categories = JSON.parse(localStorage.getItem('categories'));
+      const { data: products, error: productError } = await supabase
+        .from('products')
+        .select('*, categories(name)');
+      const { data: categories, error: categoryError } = await supabase
+        .from('categories')
+        .select('*');
+      
+      if (productError || categoryError) {
+        showNotification('Error al generar PDF: ' + (productError?.message || categoryError?.message), 'error');
+        return;
+      }
+      
       const totalProducts = products.length;
-      const lowStockProducts = products.filter(p => p.stock <= p.minStock).length;
+      const lowStockProducts = products.filter(p => p.stock <= p.min_stock).length;
       
       doc.setFontSize(14);
       doc.text('Resumen Ejecutivo:', 20, 65);
@@ -603,7 +693,7 @@
       
       switch(filter) {
         case 'low-stock':
-          filteredProducts = products.filter(p => p.stock <= p.minStock);
+          filteredProducts = products.filter(p => p.stock <= p.min_stock);
           break;
         case 'no-stock':
           filteredProducts = products.filter(p => p.stock === 0);
@@ -611,10 +701,9 @@
       }
       
       const tableData = filteredProducts.map(product => {
-        const category = categories.find(cat => cat.id === product.categoryId);
-        const categoryName = category ? category.name : 'Sin categoría';
+        const categoryName = product.categories?.name || 'Sin categoría';
         const status = product.stock === 0 ? 'Sin Stock' : 
-                      product.stock <= product.minStock ? 'Stock Bajo' : 'Normal';
+                      product.stock <= product.min_stock ? 'Stock Bajo' : 'Normal';
         
         return [
           product.name,
@@ -654,20 +743,29 @@
       showNotification('¡Reporte PDF generado exitosamente!');
     }
 
-    function updateCharts() {
+    async function updateCharts() {
       updateCategoryChart();
       updateStockChart();
     }
 
-    function updateCategoryChart() {
+    async function updateCategoryChart() {
       const ctx = document.getElementById('categoryChart').getContext('2d');
       
-      const products = JSON.parse(localStorage.getItem('products'));
-      const categories = JSON.parse(localStorage.getItem('categories'));
+      const { data: products, error: productError } = await supabase
+        .from('products')
+        .select('*');
+      const { data: categories, error: categoryError } = await supabase
+        .from('categories')
+        .select('*');
+      
+      if (productError || categoryError) {
+        showNotification('Error al cargar datos para gráficos: ' + (productError?.message || categoryError?.message), 'error');
+        return;
+      }
       
       const categoryData = {};
       categories.forEach(cat => {
-        categoryData[cat.name] = products.filter(p => p.categoryId === cat.id).length;
+        categoryData[cat.name] = products.filter(p => p.category_id === cat.id).length;
       });
       
       new Chart(ctx, {
@@ -696,12 +794,20 @@
       });
     }
 
-    function updateStockChart() {
+    async function updateStockChart() {
       const ctx = document.getElementById('stockChart').getContext('2d');
       
-      const products = JSON.parse(localStorage.getItem('products'));
-      const normalStock = products.filter(p => p.stock > p.minStock).length;
-      const lowStock = products.filter(p => p.stock <= p.minStock && p.stock > 0).length;
+      const { data: products, error } = await supabase
+        .from('products')
+        .select('*');
+      
+      if (error) {
+        showNotification('Error al cargar datos para gráficos: ' + error.message, 'error');
+        return;
+      }
+      
+      const normalStock = products.filter(p => p.stock > p.min_stock).length;
+      const lowStock = products.filter(p => p.stock <= p.min_stock && p.stock > 0).length;
       const noStock = products.filter(p => p.stock === 0).length;
       
       new Chart(ctx, {
@@ -744,12 +850,215 @@
       });
     }
 
-    function loadData() {
+    async function loadWeeklyReports() {
+      const { data: reports, error } = await supabase
+        .from('weekly_reports')
+        .select('*')
+        .order('created_at', { ascending: false });
+      
+      if (error) {
+        showNotification('Error al cargar reportes semanales: ' + error.message, 'error');
+        return;
+      }
+      
+      const reportList = document.getElementById('weekly-reports-list');
+      reportList.innerHTML = '';
+      
+      reports.forEach(report => {
+        const div = document.createElement('div');
+        div.className = 'glass-effect p-4 rounded-lg mb-2';
+        div.innerHTML = `
+          <div class="text-white">
+            <p><strong>Fecha:</strong> ${new Date(report.created_at).toLocaleString()}</p>
+            <p><strong>Total Productos:</strong> ${report.report_data.totalProducts}</p>
+            <p><strong>Stock Bajo:</strong> ${report.report_data.lowStockProducts}</p>
+            <button onclick="downloadWeeklyReport(${report.id})" class="bg-blue-500/80 text-white px-3 py-1 rounded text-sm hover:bg-blue-600 transition-colors">
+              Descargar PDF
+            </button>
+          </div>
+        `;
+        reportList.appendChild(div);
+      });
+    }
+
+    async function downloadWeeklyReport(reportId) {
+      const { data: report, error } = await supabase
+        .from('weekly_reports')
+        .select('*')
+        .eq('id', reportId)
+        .single();
+      
+      if (error) {
+        showNotification('Error al cargar reporte: ' + error.message, 'error');
+        return;
+      }
+      
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF();
+      
+      doc.setFontSize(20);
+      doc.text('Sushi y más... - Reporte Semanal de Inventario', 20, 20);
+      
+      doc.setFontSize(12);
+      doc.text(`Fecha: ${new Date(report.created_at).toLocaleDateString()}`, 20, 35);
+      doc.text(`Hora: ${new Date(report.created_at).toLocaleTimeString()}`, 20, 45);
+      
+      doc.setFontSize(14);
+      doc.text('Resumen Ejecutivo:', 20, 65);
+      doc.setFontSize(11);
+      doc.text(`Total de Productos: ${report.report_data.totalProducts}`, 30, 75);
+      doc.text(`Productos con Stock Bajo: ${report.report_data.lowStockProducts}`, 30, 85);
+      
+      const tableData = report.report_data.products.map(product => [
+        product.name,
+        product.category,
+        product.stock.toString(),
+        product.description,
+        product.status
+      ]);
+      
+      doc.autoTable({
+        head: [['Producto', 'Categoría', 'Stock', 'Descripción', 'Estado']],
+        body: tableData,
+        startY: 100,
+        styles: {
+          fontSize: 9,
+          cellPadding: 3
+        },
+        headStyles: {
+          fillColor: [52, 73, 185],
+          textColor: 255
+        },
+        alternateRowStyles: {
+          fillColor: [245, 245, 245]
+        },
+        columnStyles: {
+          2: { halign: 'center' },
+          4: { halign: 'center' }
+        }
+      });
+      
+      const finalY = doc.lastAutoTable.finalY || 100;
+      doc.setFontSize(10);
+      doc.text('Generado por Sistema de Inventarios - Sushi y más...', 20, finalY + 20);
+      
+      doc.save(`reporte_semanal_sushi_${new Date(report.created_at).toISOString().split('T')[0]}.pdf`);
+      showNotification('¡Reporte descargado exitosamente!');
+    }
+
+    async function generateWeeklyReport() {
+      const { data: products, error: productError } = await supabase
+        .from('products')
+        .select('*, categories(name)');
+      const { data: categories, error: categoryError } = await supabase
+        .from('categories')
+        .select('*');
+      
+      if (productError || categoryError) {
+        showNotification('Error al generar reporte semanal: ' + (productError?.message || categoryError?.message), 'error');
+        return;
+      }
+
+      const totalProducts = products.length;
+      const lowStockProducts = products.filter(p => p.stock <= p.min_stock).length;
+      const reportData = {
+        date: new Date().toISOString(),
+        totalProducts,
+        lowStockProducts,
+        products: products.map(product => ({
+          name: product.name,
+          category: product.categories?.name || 'Sin categoría',
+          stock: product.stock,
+          min_stock: product.min_stock,
+          description: product.description || 'N/A',
+          status: product.stock === 0 ? 'Sin Stock' : 
+                  product.stock <= product.min_stock ? 'Stock Bajo' : 'Normal'
+        }))
+      };
+
+      const { error } = await supabase
+        .from('weekly_reports')
+        .insert([{ report_data: reportData }]);
+      
+      if (error) {
+        showNotification('Error al guardar reporte semanal: ' + error.message, 'error');
+        return;
+      }
+
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF();
+      
+      doc.setFontSize(20);
+      doc.text('Sushi y más... - Reporte Semanal de Inventario', 20, 20);
+      
+      doc.setFontSize(12);
+      doc.text(`Fecha: ${new Date().toLocaleDateString()}`, 20, 35);
+      doc.text(`Hora: ${new Date().toLocaleTimeString()}`, 20, 45);
+      
+      doc.setFontSize(14);
+      doc.text('Resumen Ejecutivo:', 20, 65);
+      doc.setFontSize(11);
+      doc.text(`Total de Productos: ${totalProducts}`, 30, 75);
+      doc.text(`Productos con Stock Bajo: ${lowStockProducts}`, 30, 85);
+      
+      const tableData = reportData.products.map(product => [
+        product.name,
+        product.category,
+        product.stock.toString(),
+        product.description,
+        product.status
+      ]);
+      
+      doc.autoTable({
+        head: [['Producto', 'Categoría', 'Stock', 'Descripción', 'Estado']],
+        body: tableData,
+        startY: 100,
+        styles: {
+          fontSize: 9,
+          cellPadding: 3
+        },
+        headStyles: {
+          fillColor: [52, 73, 185],
+          textColor: 255
+        },
+        alternateRowStyles: {
+          fillColor: [245, 245, 245]
+        },
+        columnStyles: {
+          2: { halign: 'center' },
+          4: { halign: 'center' }
+        }
+      });
+      
+      const finalY = doc.lastAutoTable.finalY || 100;
+      doc.setFontSize(10);
+      doc.text('Generado por Sistema de Inventarios - Sushi y más...', 20, finalY + 20);
+      
+      doc.save(`reporte_semanal_sushi_${new Date().toISOString().split('T')[0]}.pdf`);
+      showNotification('¡Reporte semanal generado y guardado exitosamente!');
+    }
+
+    function scheduleWeeklyReport() {
+      const now = new Date();
+      const nextMonday = new Date();
+      nextMonday.setDate(now.getDate() + ((1 + 7 - now.getDay()) % 7));
+      nextMonday.setHours(0, 0, 0, 0);
+      
+      const timeUntilMonday = nextMonday - now;
+      
+      setTimeout(() => {
+        generateWeeklyReport();
+        setInterval(generateWeeklyReport, 7 * 24 * 60 * 60 * 1000);
+      }, timeUntilMonday);
+    }
+
+    async function loadData() {
       loadCategories();
       loadProducts();
       updateStats();
       showTab('categories');
       updateTime();
+      scheduleWeeklyReport();
     }
   </script>
 </body>
