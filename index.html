@@ -5,7 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Sushi y más... - Sistema de Inventarios</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js" defer></script>
+  <link rel="icon" href="data:,">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
@@ -58,7 +59,7 @@
         <label class="block text-white/90 mb-2">Contraseña</label>
         <input id="password" type="password" class="w-full p-3 bg-white/20 border border-white/30 rounded-lg text-white placeholder-white/50 backdrop-blur-sm" placeholder="sushi123">
       </div>
-      <button onclick="login()" class="w-full bg-gradient-to-r from-blue-500 to-purple-600 text-white p-3 rounded-lg hover:from-blue-600 hover:to-purple-700 transition-all duration-300 transform hover:scale-105">
+      <button id="login-button" class="w-full bg-gradient-to-r from-blue-500 to-purple-600 text-white p-3 rounded-lg hover:from-blue-600 hover:to-purple-700 transition-all duration-300 transform hover:scale-105">
         Iniciar Sesión
       </button>
       <p id="login-error" class="text-red-300 text-center mt-4 hidden">Usuario o contraseña incorrectos</p>
@@ -82,7 +83,7 @@
             <div id="current-time" class="text-sm"></div>
             <div id="current-date" class="text-xs"></div>
           </div>
-          <button onclick="logout()" class="bg-red-500/80 backdrop-blur-sm text-white px-6 py-3 rounded-lg hover:bg-red-600 transition-all duration-300 transform hover:scale-105">
+          <button id="logout-button" class="bg-red-500/80 backdrop-blur-sm text-white px-6 py-3 rounded-lg hover:bg-red-600 transition-all duration-300 transform hover:scale-105">
             Cerrar Sesión
           </button>
         </div>
@@ -122,19 +123,19 @@
       <!-- Navigation Tabs -->
       <div class="glass-effect rounded-xl p-2 mb-8">
         <div class="flex space-x-2">
-          <button onclick="showTab('categories')" id="tab-categories" class="tab-btn flex-1 py-3 px-6 rounded-lg text-white/70 hover:text-white transition-all duration-300">
+          <button id="tab-categories" class="tab-btn flex-1 py-3 px-6 rounded-lg text-white/70 hover:text-white transition-all duration-300">
             🏷️ Categorías
           </button>
-          <button onclick="showTab('products')" id="tab-products" class="tab-btn flex-1 py-3 px-6 rounded-lg text-white/70 hover:text-white transition-all duration-300">
+          <button id="tab-products" class="tab-btn flex-1 py-3 px-6 rounded-lg text-white/70 hover:text-white transition-all duration-300">
             📦 Productos
           </button>
-          <button onclick="showTab('reports')" id="tab-reports" class="tab-btn flex-1 py-3 px-6 rounded-lg text-white/70 hover:text-white transition-all duration-300">
+          <button id="tab-reports" class="tab-btn flex-1 py-3 px-6 rounded-lg text-white/70 hover:text-white transition-all duration-300">
             📊 Reportes
           </button>
-          <button onclick="showTab('analytics')" id="tab-analytics" class="tab-btn flex-1 py-3 px-6 rounded-lg text-white/70 hover:text-white transition-all duration-300">
+          <button id="tab-analytics" class="tab-btn flex-1 py-3 px-6 rounded-lg text-white/70 hover:text-white transition-all duration-300">
             📈 Analytics
           </button>
-          <button onclick="showTab('weekly-reports')" id="tab-weekly-reports" class="tab-btn flex-1 py-3 px-6 rounded-lg text-white/70 hover:text-white transition-all duration-300">
+          <button id="tab-weekly-reports" class="tab-btn flex-1 py-3 px-6 rounded-lg text-white/70 hover:text-white transition-all duration-300">
             📅 Reportes Semanales
           </button>
         </div>
@@ -149,7 +150,7 @@
           </h2>
           <div class="flex mb-6">
             <input id="category-name" type="text" class="flex-1 p-3 bg-white/20 border border-white/30 rounded-l-lg text-white placeholder-white/50 backdrop-blur-sm" placeholder="Nombre de la categoría">
-            <button onclick="addCategory()" class="bg-green-500/80 backdrop-blur-sm text-white px-6 py-3 rounded-r-lg hover:bg-green-600 transition-all duration-300">
+            <button id="add-category-button" class="bg-green-500/80 backdrop-blur-sm text-white px-6 py-3 rounded-r-lg hover:bg-green-600 transition-all duration-300">
               Agregar
             </button>
           </div>
@@ -186,14 +187,14 @@
               <input id="product-description" type="text" class="w-full p-3 bg-white/20 border border-white/30 rounded-lg text-white placeholder-white/50 backdrop-blur-sm" placeholder="Descripción">
             </div>
           </div>
-          <button onclick="addProduct()" class="bg-green-500/80 backdrop-blur-sm text-white px-6 py-3 rounded-lg hover:bg-green-600 transition-all duration-300 transform hover:scale-105">
+          <button id="add-product-button" class="bg-green-500/80 backdrop-blur-sm text-white px-6 py-3 rounded-lg hover:bg-green-600 transition-all duration-300 transform hover:scale-105">
             Agregar Producto
           </button>
           
           <!-- Search and Filter -->
           <div class="flex gap-4 mt-6 mb-4">
-            <input id="search-products" type="text" placeholder="Buscar productos..." class="flex-1 p-3 bg-white/20 border border-white/30 rounded-lg text-white placeholder-white/50 backdrop-blur-sm" oninput="filterProducts()">
-            <select id="filter-category" class="p-3 bg-white/20 border border-white/30 rounded-lg text-white backdrop-blur-sm" onchange="filterProducts()">
+            <input id="search-products" type="text" placeholder="Buscar productos..." class="flex-1 p-3 bg-white/20 border border-white/30 rounded-lg text-white placeholder-white/50 backdrop-blur-sm">
+            <select id="filter-category" class="p-3 bg-white/20 border border-white/30 rounded-lg text-white backdrop-blur-sm">
               <option value="">Todas las categorías</option>
             </select>
           </div>
@@ -215,10 +216,10 @@
               <option value="low-stock">Stock Bajo</option>
               <option value="no-stock">Sin Stock</option>
             </select>
-            <button onclick="generateReport()" class="bg-blue-500/80 backdrop-blur-sm text-white px-6 py-3 rounded-lg hover:bg-blue-600 transition-all duration-300">
+            <button id="generate-report-button" class="bg-blue-500/80 backdrop-blur-sm text-white px-6 py-3 rounded-lg hover:bg-blue-600 transition-all duration-300">
               Generar Reporte
             </button>
-            <button onclick="downloadPDF()" class="bg-red-500/80 backdrop-blur-sm text-white px-6 py-3 rounded-lg hover:bg-red-600 transition-all duration-300">
+            <button id="download-pdf-button" class="bg-red-500/80 backdrop-blur-sm text-white px-6 py-3 rounded-lg hover:bg-red-600 transition-all duration-300">
               📄 Descargar PDF
             </button>
           </div>
@@ -270,133 +271,228 @@
   <div id="notifications" class="fixed top-4 right-4 z-50"></div>
 
   <script>
-    // Esperar a que el script de Supabase se cargue
-    window.addEventListener('load', () => {
-      if (typeof supabase === 'undefined') {
-        console.error('La librería de Supabase no se cargó correctamente.');
-        showNotification('Error: No se pudo cargar Supabase. Verifica la conexión al CDN.', 'error');
+    // Variables globales
+    const supabaseUrl = 'https://rvpvhkiwmylyysaeyght.supabase.co';
+    const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ2cHZoa2l3bXlseXlzYWV5Z2h0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDg0NzY1MjksImV4cCI6MjA2NDA1MjUyOX0.rSLaSbOhsLDYBMS3T0kj_7ZDVZl0IsepLneOcF39rqY';
+
+  
+    let supabase;
+    let isAuthenticated = false;
+    let currentTab = 'categories';
+    let categoryChartInstance = null;
+    let stockChartInstance = null;
+
+    // Inicialización cuando el DOM esté listo
+    document.addEventListener('DOMContentLoaded', () => {
+      // Verificar si Supabase está disponible
+      if (!window.supabase) {
+        console.error('Librería de Supabase no cargada');
+        showNotification('Error: Supabase no está disponible', 'error');
         return;
       }
 
       // Inicializar Supabase
-      const supabaseUrl = 'https://rvpvhkiwmylyysaeyght.supabase.co';
-      const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ2cHZoa2l3bXlseXlzYWV5Z2h0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDg0NzY1MjksImV4cCI6MjA2NDA1MjUyOX0.rSLaSbOhsLDYBMS3T0kj_7ZDVZl0IsepLneOcF39rqY';
-      const supabase = supabase.createClient(supabaseUrl, supabaseKey);
-
-      let currentTab = 'categories';
-
-      // Check if user is logged in (using session storage for simplicity)
-      let isAuthenticated = false;
-      const checkAuth = () => isAuthenticated;
-      if (checkAuth()) {
-        document.getElementById('login-section').classList.add('hidden');
-        document.getElementById('dashboard').classList.remove('hidden');
-        loadData();
+      try {
+        supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+        console.log('Supabase inicializado correctamente');
+      } catch (error) {
+        console.error('Error al inicializar Supabase:', error);
+        showNotification('Error al conectar con Supabase', 'error');
+        return;
       }
 
-      // Update time
-      function updateTime() {
-        const now = new Date();
-        document.getElementById('current-time').textContent = now.toLocaleTimeString();
-        document.getElementById('current-date').textContent = now.toLocaleDateString();
-      }
+      // Configurar event listeners
+      document.getElementById('login-button').addEventListener('click', login);
+      document.getElementById('logout-button').addEventListener('click', logout);
+      document.getElementById('add-category-button').addEventListener('click', addCategory);
+      document.getElementById('add-product-button').addEventListener('click', addProduct);
+      document.getElementById('generate-report-button').addEventListener('click', generateReport);
+      document.getElementById('download-pdf-button').addEventListener('click', downloadPDF);
+      document.getElementById('search-products').addEventListener('input', filterProducts);
+      document.getElementById('filter-category').addEventListener('change', filterProducts);
+
+      // Verificar autenticación
+      checkAuth();
+
+      // Configurar tabs
+      setupTabs();
+
+      // Iniciar reloj
+      updateTime();
       setInterval(updateTime, 1000);
 
-      function showNotification(message, type = 'success') {
-        const notification = document.createElement('div');
-        notification.className = `glass-effect p-4 rounded-lg text-white mb-2 fade-in ${type === 'error' ? 'bg-red-500/50' : 'bg-green-500/50'}`;
-        notification.textContent = message;
-        document.getElementById('notifications').appendChild(notification);
-        
-        setTimeout(() => {
-          notification.remove();
-        }, 3000);
+      // Cargar datos si está autenticado
+      if (isAuthenticated) {
+        loadData();
       }
+    });
 
-      async function login() {
-        const username = document.getElementById('username').value;
-        const password = document.getElementById('password').value;
-
-        const { data, error } = await supabase
-          .from('users')
-          .select('*')
-          .eq('username', username)
-          .eq('password', password)
-          .single();
-
-        if (error || !data) {
-          document.getElementById('login-error').classList.remove('hidden');
-          showNotification('Usuario o contraseña incorrectos.', 'error');
-          return;
+    // Funciones de autenticación
+    function checkAuth() {
+      // Simulación de autenticación - en producción, usar Supabase Auth:
+      /*
+      async function checkAuth() {
+        const { data: { session } } = await supabase.auth.getSession();
+        isAuthenticated = !!session;
+        sessionStorage.setItem('isAuthenticated', isAuthenticated.toString());
+        if (isAuthenticated) {
+          document.getElementById('login-section').classList.add('hidden');
+          document.getElementById('dashboard').classList.remove('hidden');
         }
-
-        isAuthenticated = true;
+      }
+      */
+      isAuthenticated = sessionStorage.getItem('isAuthenticated') === 'true';
+      if (isAuthenticated) {
         document.getElementById('login-section').classList.add('hidden');
         document.getElementById('dashboard').classList.remove('hidden');
-        loadData();
-        showNotification('¡Bienvenido al sistema!');
       }
+    }
 
-      function logout() {
+    async function login() {
+  const username = document.getElementById('username').value;
+  const password = document.getElementById('password').value;
+
+  console.log('Intentando login con:', { username, password });
+
+  try {
+    const { data, error } = await supabase
+      .from('users')
+      .select('*')
+      .eq('username', username)
+      .eq('password', password);
+
+    if (error) {
+      console.error('Error en la consulta a Supabase:', error);
+      throw new Error(error.message || 'Error al consultar la base de datos');
+    }
+
+    if (!data || data.length === 0) {
+      throw new Error('Usuario o contraseña incorrectos');
+    }
+
+    if (data.length > 1) {
+      console.warn('Múltiples usuarios encontrados con las mismas credenciales');
+      throw new Error('Error: Múltiples usuarios encontrados');
+    }
+
+    const user = data[0];
+    console.log('Usuario encontrado:', user);
+
+    isAuthenticated = true;
+    sessionStorage.setItem('isAuthenticated', 'true');
+    document.getElementById('login-section').classList.add('hidden');
+    document.getElementById('dashboard').classList.remove('hidden');
+    document.getElementById('login-error').classList.add('hidden');
+    
+    loadData();
+    showNotification('¡Bienvenido al sistema!');
+  } catch (error) {
+    console.error('Error de login:', error);
+    document.getElementById('login-error').classList.remove('hidden');
+    showNotification(error.message, 'error');
+  }
+}
+
+    function logout() {
+      // Para Supabase Auth, usar:
+      /*
+      async function logout() {
+        await supabase.auth.signOut();
         isAuthenticated = false;
+        sessionStorage.removeItem('isAuthenticated');
         document.getElementById('login-section').classList.remove('hidden');
         document.getElementById('dashboard').classList.add('hidden');
         document.getElementById('login-error').classList.add('hidden');
         document.getElementById('username').value = '';
         document.getElementById('password').value = '';
       }
+      */
+      isAuthenticated = false;
+      sessionStorage.removeItem('isAuthenticated');
+      document.getElementById('login-section').classList.remove('hidden');
+      document.getElementById('dashboard').classList.add('hidden');
+      document.getElementById('login-error').classList.add('hidden');
+      document.getElementById('username').value = '';
+      document.getElementById('password').value = '';
+    }
 
-      function showTab(tabName) {
-        document.querySelectorAll('.tab-content').forEach(tab => tab.classList.add('hidden'));
-        document.querySelectorAll('.tab-btn').forEach(btn => {
-          btn.classList.remove('bg-white/20', 'text-white');
-          btn.classList.add('text-white/70');
-        });
-        
-        document.getElementById(`${tabName}-section`).classList.remove('hidden');
-        document.getElementById(`tab-${tabName}`).classList.add('bg-white/20', 'text-white');
-        document.getElementById(`tab-${tabName}`).classList.remove('text-white/70');
-        
-        currentTab = tabName;
-        
-        if (tabName === 'analytics') {
-          setTimeout(updateCharts, 100);
-        } else if (tabName === 'weekly-reports') {
-          loadWeeklyReports();
-        }
+    // Funciones de UI
+    function updateTime() {
+      const now = new Date();
+      document.getElementById('current-time').textContent = now.toLocaleTimeString();
+      document.getElementById('current-date').textContent = now.toLocaleDateString();
+    }
+
+    function showNotification(message, type = 'success') {
+      const notification = document.createElement('div');
+      notification.className = `glass-effect p-4 rounded-lg text-white mb-2 fade-in ${type === 'error' ? 'bg-red-500/50' : 'bg-green-500/50'}`;
+      notification.textContent = message;
+      document.getElementById('notifications').appendChild(notification);
+      
+      setTimeout(() => {
+        notification.remove();
+      }, 3000);
+    }
+
+    function setupTabs() {
+      document.querySelectorAll('.tab-btn').forEach(btn => {
+        const tabName = btn.id.replace('tab-', '');
+        btn.addEventListener('click', () => showTab(tabName));
+      });
+    }
+
+    function showTab(tabName) {
+      document.querySelectorAll('.tab-content').forEach(tab => tab.classList.add('hidden'));
+      document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.classList.remove('bg-white/20', 'text-white');
+        btn.classList.add('text-white/70');
+      });
+      
+      document.getElementById(`${tabName}-section`).classList.remove('hidden');
+      document.getElementById(`tab-${tabName}`).classList.add('bg-white/20', 'text-white');
+      document.getElementById(`tab-${tabName}`).classList.remove('text-white/70');
+      
+      currentTab = tabName;
+      
+      if (tabName === 'analytics') {
+        setTimeout(updateCharts, 100);
+      } else if (tabName === 'weekly-reports') {
+        loadWeeklyReports();
       }
+    }
 
-      async function addCategory() {
-        const name = document.getElementById('category-name').value.trim();
-        if (!name) {
-          showNotification('Por favor, ingresa un nombre para la categoría.', 'error');
-          return;
-        }
-        
+    // Funciones de categorías
+    async function addCategory() {
+      const name = document.getElementById('category-name').value.trim();
+      if (!name) {
+        showNotification('Por favor, ingresa un nombre para la categoría.', 'error');
+        return;
+      }
+      
+      try {
         const { error } = await supabase
           .from('categories')
           .insert([{ name }]);
         
-        if (error) {
-          showNotification('Error al agregar categoría: ' + error.message, 'error');
-          return;
-        }
+        if (error) throw error;
         
         document.getElementById('category-name').value = '';
         loadCategories();
         updateStats();
         showNotification('Categoría agregada exitosamente.');
+      } catch (error) {
+        console.error('Error al agregar categoría:', error);
+        showNotification('Error al agregar categoría: ' + error.message, 'error');
       }
+    }
 
-      async function loadCategories() {
+    async function loadCategories() {
+      try {
         const { data: categories, error } = await supabase
           .from('categories')
           .select('*');
         
-        if (error) {
-          showNotification('Error al cargar categorías: ' + error.message, 'error');
-          return;
-        }
+        if (error) throw error;
         
         const categoryList = document.getElementById('category-list');
         const categorySelect = document.getElementById('product-category');
@@ -412,7 +508,7 @@
           div.innerHTML = `
             <div class="flex justify-between items-center text-white">
               <span class="font-semibold">${category.name}</span>
-              <button onclick="deleteCategory(${category.id})" class="text-red-300 hover:text-red-100 transition-colors">
+              <button data-id="${category.id}" class="delete-category text-red-300 hover:text-red-100 transition-colors">
                 🗑️
               </button>
             </div>
@@ -429,47 +525,59 @@
           filterOption.textContent = category.name;
           filterSelect.appendChild(filterOption);
         });
-      }
 
-      async function deleteCategory(id) {
-        if (!confirm('¿Estás seguro de eliminar esta categoría? Los productos asociados también se eliminarán.')) return;
-        
+        // Agregar event listeners para los botones de eliminar
+        document.querySelectorAll('.delete-category').forEach(btn => {
+          btn.addEventListener('click', (e) => {
+            deleteCategory(e.target.closest('button').dataset.id);
+          });
+        });
+      } catch (error) {
+        console.error('Error al cargar categorías:', error);
+        showNotification('Error al cargar categorías: ' + error.message, 'error');
+      }
+    }
+
+    async function deleteCategory(id) {
+      if (!confirm('¿Estás seguro de eliminar esta categoría? Los productos asociados también se eliminarán.')) return;
+      
+      try {
         const { error } = await supabase
           .from('categories')
           .delete()
           .eq('id', id);
         
-        if (error) {
-          showNotification('Error al eliminar categoría: ' + error.message, 'error');
-          return;
-        }
+        if (error) throw error;
         
         loadCategories();
         loadProducts();
         updateStats();
         showNotification('Categoría eliminada exitosamente.');
+      } catch (error) {
+        console.error('Error al eliminar categoría:', error);
+        showNotification('Error al eliminar categoría: ' + error.message, 'error');
+      }
+    }
+
+    // Funciones de productos
+    async function addProduct() {
+      const name = document.getElementById('product-name').value.trim();
+      const categoryId = parseInt(document.getElementById('product-category').value);
+      const stock = parseInt(document.getElementById('product-stock').value);
+      const minStock = parseInt(document.getElementById('product-min-stock').value) || 5;
+      const description = document.getElementById('product-description').value.trim();
+
+      if (!name || !categoryId || isNaN(stock) || stock < 0) {
+        showNotification('Por favor, completa todos los campos correctamente. Las existencias no pueden ser negativas.', 'error');
+        return;
       }
 
-      async function addProduct() {
-        const name = document.getElementById('product-name').value.trim();
-        const categoryId = parseInt(document.getElementById('product-category').value);
-        const stock = parseInt(document.getElementById('product-stock').value);
-        const minStock = parseInt(document.getElementById('product-min-stock').value) || 5;
-        const description = document.getElementById('product-description').value.trim();
-
-        if (!name || !categoryId || isNaN(stock) || stock < 0) {
-          showNotification('Por favor, completa todos los campos correctamente. Las existencias no pueden ser negativas.', 'error');
-          return;
-        }
-
+      try {
         const { error } = await supabase
           .from('products')
           .insert([{ name, category_id: categoryId, stock, min_stock: minStock, description }]);
         
-        if (error) {
-          showNotification('Error al agregar producto: ' + error.message, 'error');
-          return;
-        }
+        if (error) throw error;
 
         document.getElementById('product-name').value = '';
         document.getElementById('product-category').value = '';
@@ -480,25 +588,27 @@
         loadProducts();
         updateStats();
         showNotification('Producto agregado exitosamente.');
+      } catch (error) {
+        console.error('Error al agregar producto:', error);
+        showNotification('Error al agregar producto: ' + error.message, 'error');
       }
+    }
 
-      async function loadProducts() {
-        filterProducts();
-      }
+    async function loadProducts() {
+      filterProducts();
+    }
 
-      async function filterProducts() {
-        const searchTerm = document.getElementById('search-products').value.toLowerCase();
-        const categoryFilter = document.getElementById('filter-category').value;
-        const productList = document.getElementById('product-list');
-        
-        const { data: products, error: productError } = await supabase
+    async function filterProducts() {
+      const searchTerm = document.getElementById('search-products').value.toLowerCase();
+      const categoryFilter = document.getElementById('filter-category').value;
+      const productList = document.getElementById('product-list');
+      
+      try {
+        const { data: products, error } = await supabase
           .from('products')
           .select('*, categories(name)');
         
-        if (productError) {
-          showNotification('Error al cargar productos: ' + productError.message, 'error');
-          return;
-        }
+        if (error) throw error;
 
         productList.innerHTML = '';
 
@@ -528,27 +638,42 @@
               ${product.description ? `<p class="text-white/70 text-sm mb-4">${product.description}</p>` : ''}
               ${isLowStock ? '<div class="bg-red-500/50 text-white text-xs p-2 rounded mb-4">⚠️ Stock Bajo</div>' : ''}
               <div class="flex gap-2">
-                <button onclick="updateStock(${product.id}, 1)" class="bg-green-500/80 text-white px-3 py-1 rounded text-sm hover:bg-green-600 transition-colors">+1</button>
-                <button onclick="updateStock(${product.id}, -1)" class="bg-blue-500/80 text-white px-3 py-1 rounded text-sm hover:bg-blue-600 transition-colors">-1</button>
-                <button onclick="deleteProduct(${product.id})" class="bg-red-500/80 text-white px-3 py-1 rounded text-sm hover:bg-red-600 transition-colors">🗑️</button>
+                <button data-id="${product.id}" data-change="1" class="increase-stock bg-green-500/80 text-white px-3 py-1 rounded text-sm hover:bg-green-600 transition-colors">+1</button>
+                <button data-id="${product.id}" data-change="-1" class="decrease-stock bg-blue-500/80 text-white px-3 py-1 rounded text-sm hover:bg-blue-600 transition-colors">-1</button>
+                <button data-id="${product.id}" class="delete-product bg-red-500/80 text-white px-3 py-1 rounded text-sm hover:bg-red-600 transition-colors">🗑️</button>
               </div>
             </div>
           `;
           productList.appendChild(div);
         });
-      }
 
-      async function updateStock(id, change) {
+        // Agregar event listeners para los botones
+        document.querySelectorAll('.increase-stock, .decrease-stock').forEach(btn => {
+          btn.addEventListener('click', (e) => {
+            updateStock(e.target.dataset.id, parseInt(e.target.dataset.change));
+          });
+        });
+        
+        document.querySelectorAll('.delete-product').forEach(btn => {
+          btn.addEventListener('click', (e) => {
+            deleteProduct(e.target.dataset.id);
+          });
+        });
+      } catch (error) {
+        console.error('Error al cargar productos:', error);
+        showNotification('Error al cargar productos: ' + error.message, 'error');
+      }
+    }
+
+    async function updateStock(id, change) {
+      try {
         const { data: product, error: fetchError } = await supabase
           .from('products')
           .select('*')
           .eq('id', id)
           .single();
         
-        if (fetchError) {
-          showNotification('Error al obtener producto: ' + fetchError.message, 'error');
-          return;
-        }
+        if (fetchError) throw fetchError;
 
         const newStock = product.stock + change;
         if (newStock < 0) {
@@ -561,10 +686,7 @@
           .update({ stock: newStock })
           .eq('id', id);
         
-        if (error) {
-          showNotification('Error al actualizar stock: ' + error.message, 'error');
-          return;
-        }
+        if (error) throw error;
         
         loadProducts();
         updateStats();
@@ -572,27 +694,35 @@
         if (newStock <= product.min_stock) {
           showNotification(`¡Alerta! El producto "${product.name}" tiene stock bajo (${newStock}).`, 'error');
         }
+      } catch (error) {
+        console.error('Error al actualizar stock:', error);
+        showNotification('Error al actualizar stock: ' + error.message, 'error');
       }
+    }
 
-      async function deleteProduct(id) {
-        if (!confirm('¿Estás seguro de eliminar este producto?')) return;
-        
+    async function deleteProduct(id) {
+      if (!confirm('¿Estás seguro de eliminar este producto?')) return;
+      
+      try {
         const { error } = await supabase
           .from('products')
           .delete()
           .eq('id', id);
         
-        if (error) {
-          showNotification('Error al eliminar producto: ' + error.message, 'error');
-          return;
-        }
+        if (error) throw error;
         
         loadProducts();
         updateStats();
         showNotification('Producto eliminado exitosamente.');
+      } catch (error) {
+        console.error('Error al eliminar producto:', error);
+        showNotification('Error al eliminar producto: ' + error.message, 'error');
       }
+    }
 
-      async function updateStats() {
+    // Funciones de estadísticas
+    async function updateStats() {
+      try {
         const { data: products, error: productError } = await supabase
           .from('products')
           .select('*');
@@ -601,8 +731,7 @@
           .select('*');
         
         if (productError || categoryError) {
-          showNotification('Error al cargar estadísticas: ' + (productError?.message || categoryError?.message), 'error');
-          return;
+          throw productError || categoryError;
         }
 
         const totalProducts = products.length;
@@ -612,21 +741,24 @@
         document.getElementById('total-products').textContent = totalProducts;
         document.getElementById('total-categories').textContent = totalCategories;
         document.getElementById('low-stock-count').textContent = lowStockProducts;
+      } catch (error) {
+        console.error('Error al cargar estadísticas:', error);
+        showNotification('Error al cargar estadísticas: ' + error.message, 'error');
       }
+    }
 
-      async function generateReport() {
-        const filter = document.getElementById('report-filter').value;
-        const reportBody = document.getElementById('report-body');
-        reportBody.innerHTML = '';
+    // Funciones de reportes
+    async function generateReport() {
+      const filter = document.getElementById('report-filter').value;
+      const reportBody = document.getElementById('report-body');
+      reportBody.innerHTML = '';
 
-        const { data: products, error: productError } = await supabase
+      try {
+        const { data: products, error } = await supabase
           .from('products')
           .select('*, categories(name)');
         
-        if (productError) {
-          showNotification('Error al generar reporte: ' + productError.message, 'error');
-          return;
-        }
+        if (error) throw error;
         
         let filteredProducts = products;
         
@@ -658,9 +790,14 @@
           `;
           reportBody.appendChild(row);
         });
+      } catch (error) {
+        console.error('Error al generar reporte:', error);
+        showNotification('Error al generar reporte: ' + error.message, 'error');
       }
+    }
 
-      async function downloadPDF() {
+    async function downloadPDF() {
+      try {
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF();
         
@@ -679,8 +816,7 @@
           .select('*');
         
         if (productError || categoryError) {
-          showNotification('Error al generar PDF: ' + (productError?.message || categoryError?.message), 'error');
-          return;
+          throw productError || categoryError;
         }
         
         const totalProducts = products.length;
@@ -745,15 +881,25 @@
         
         doc.save(`inventario_sushi_${new Date().toISOString().split('T')[0]}.pdf`);
         showNotification('¡Reporte PDF generado exitosamente!');
+      } catch (error) {
+        console.error('Error al generar PDF:', error);
+        showNotification('Error al generar PDF: ' + error.message, 'error');
       }
+    }
 
-      async function updateCharts() {
-        updateCategoryChart();
-        updateStockChart();
-      }
+    // Funciones de gráficos
+    async function updateCharts() {
+      updateCategoryChart();
+      updateStockChart();
+    }
 
-      async function updateCategoryChart() {
+    async function updateCategoryChart() {
+      try {
         const ctx = document.getElementById('categoryChart').getContext('2d');
+        
+        if (categoryChartInstance) {
+          categoryChartInstance.destroy();
+        }
         
         const { data: products, error: productError } = await supabase
           .from('products')
@@ -763,8 +909,7 @@
           .select('*');
         
         if (productError || categoryError) {
-          showNotification('Error al cargar datos para gráficos: ' + (productError?.message || categoryError?.message), 'error');
-          return;
+          throw productError || categoryError;
         }
         
         const categoryData = {};
@@ -772,7 +917,7 @@
           categoryData[cat.name] = products.filter(p => p.category_id === cat.id).length;
         });
         
-        new Chart(ctx, {
+        categoryChartInstance = new Chart(ctx, {
           type: 'doughnut',
           data: {
             labels: Object.keys(categoryData),
@@ -796,25 +941,31 @@
             }
           }
         });
+      } catch (error) {
+        console.error('Error al cargar gráfico de categorías:', error);
+        showNotification('Error al cargar gráfico de categorías: ' + error.message, 'error');
       }
+    }
 
-      async function updateStockChart() {
+    async function updateStockChart() {
+      try {
         const ctx = document.getElementById('stockChart').getContext('2d');
+        
+        if (stockChartInstance) {
+          stockChartInstance.destroy();
+        }
         
         const { data: products, error } = await supabase
           .from('products')
           .select('*');
         
-        if (error) {
-          showNotification('Error al cargar datos para gráficos: ' + error.message, 'error');
-          return;
-        }
+        if (error) throw error;
         
         const normalStock = products.filter(p => p.stock > p.min_stock).length;
         const lowStock = products.filter(p => p.stock <= p.min_stock && p.stock > 0).length;
         const noStock = products.filter(p => p.stock === 0).length;
         
-        new Chart(ctx, {
+        stockChartInstance = new Chart(ctx, {
           type: 'bar',
           data: {
             labels: ['Stock Normal', 'Stock Bajo', 'Sin Stock'],
@@ -852,18 +1003,21 @@
             }
           }
         });
+      } catch (error) {
+        console.error('Error al cargar gráfico de stock:', error);
+        showNotification('Error al cargar gráfico de stock: ' + error.message, 'error');
       }
+    }
 
-      async function loadWeeklyReports() {
+    // Funciones de reportes semanales
+    async function loadWeeklyReports() {
+      try {
         const { data: reports, error } = await supabase
           .from('weekly_reports')
           .select('*')
           .order('created_at', { ascending: false });
         
-        if (error) {
-          showNotification('Error al cargar reportes semanales: ' + error.message, 'error');
-          return;
-        }
+        if (error) throw error;
         
         const reportList = document.getElementById('weekly-reports-list');
         reportList.innerHTML = '';
@@ -876,26 +1030,35 @@
               <p><strong>Fecha:</strong> ${new Date(report.created_at).toLocaleString()}</p>
               <p><strong>Total Productos:</strong> ${report.report_data.totalProducts}</p>
               <p><strong>Stock Bajo:</strong> ${report.report_data.lowStockProducts}</p>
-              <button onclick="downloadWeeklyReport(${report.id})" class="bg-blue-500/80 text-white px-3 py-1 rounded text-sm hover:bg-blue-600 transition-colors">
+              <button data-id="${report.id}" class="download-weekly-report bg-blue-500/80 text-white px-3 py-1 rounded text-sm hover:bg-blue-600 transition-colors">
                 Descargar PDF
               </button>
             </div>
           `;
           reportList.appendChild(div);
         });
-      }
 
-      async function downloadWeeklyReport(reportId) {
+        // Agregar event listeners para los botones de descarga
+        document.querySelectorAll('.download-weekly-report').forEach(btn => {
+          btn.addEventListener('click', (e) => {
+            downloadWeeklyReport(e.target.dataset.id);
+          });
+        });
+      } catch (error) {
+        console.error('Error al cargar reportes semanales:', error);
+        showNotification('Error al cargar reportes semanales: ' + error.message, 'error');
+      }
+    }
+
+    async function downloadWeeklyReport(reportId) {
+      try {
         const { data: report, error } = await supabase
           .from('weekly_reports')
           .select('*')
           .eq('id', reportId)
           .single();
         
-        if (error) {
-          showNotification('Error al cargar reporte: ' + error.message, 'error');
-          return;
-        }
+        if (error) throw error;
         
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF();
@@ -948,9 +1111,14 @@
         
         doc.save(`reporte_semanal_sushi_${new Date(report.created_at).toISOString().split('T')[0]}.pdf`);
         showNotification('¡Reporte descargado exitosamente!');
+      } catch (error) {
+        console.error('Error al descargar reporte:', error);
+        showNotification('Error al descargar reporte: ' + error.message, 'error');
       }
+    }
 
-      async function generateWeeklyReport() {
+    async function generateWeeklyReport() {
+      try {
         const { data: products, error: productError } = await supabase
           .from('products')
           .select('*, categories(name)');
@@ -959,8 +1127,7 @@
           .select('*');
         
         if (productError || categoryError) {
-          showNotification('Error al generar reporte semanal: ' + (productError?.message || categoryError?.message), 'error');
-          return;
+          throw productError || categoryError;
         }
 
         const totalProducts = products.length;
@@ -984,10 +1151,7 @@
           .from('weekly_reports')
           .insert([{ report_data: reportData }]);
         
-        if (error) {
-          showNotification('Error al guardar reporte semanal: ' + error.message, 'error');
-          return;
-        }
+        if (error) throw error;
 
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF();
@@ -1040,31 +1204,35 @@
         
         doc.save(`reporte_semanal_sushi_${new Date().toISOString().split('T')[0]}.pdf`);
         showNotification('¡Reporte semanal generado y guardado exitosamente!');
+      } catch (error) {
+        console.error('Error al generar reporte semanal:', error);
+        showNotification('Error al generar reporte semanal: ' + error.message, 'error');
       }
+    }
 
-      function scheduleWeeklyReport() {
-        const now = new Date();
-        const nextMonday = new Date();
-        nextMonday.setDate(now.getDate() + ((1 + 7 - now.getDay()) % 7));
-        nextMonday.setHours(0, 0, 0, 0);
-        
-        const timeUntilMonday = nextMonday - now;
-        
-        setTimeout(() => {
-          generateWeeklyReport();
-          setInterval(generateWeeklyReport, 7 * 24 * 60 * 60 * 1000);
-        }, timeUntilMonday);
-      }
+    function scheduleWeeklyReport() {
+      const now = new Date();
+      const nextMonday = new Date();
+      nextMonday.setDate(now.getDate() + ((1 + 7 - now.getDay()) % 7));
+      nextMonday.setHours(0, 0, 0, 0);
+      
+      const timeUntilMonday = nextMonday - now;
+      
+      setTimeout(() => {
+        generateWeeklyReport();
+        setInterval(generateWeeklyReport, 7 * 24 * 60 * 60 * 1000);
+      }, timeUntilMonday);
+    }
 
-      async function loadData() {
-        loadCategories();
-        loadProducts();
-        updateStats();
-        showTab('categories');
-        updateTime();
-        scheduleWeeklyReport();
-      }
-    });
+    // Función principal para cargar datos
+    async function loadData() {
+      loadCategories();
+      loadProducts();
+      updateStats();
+      showTab('categories');
+      updateTime();
+      scheduleWeeklyReport();
+    }
   </script>
 </body>
 </html>
