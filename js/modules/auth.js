@@ -1,20 +1,25 @@
-import { supabaseUrl, supabaseKey } from '../config/supabaseConfig.js';
 
-let supabase;
+import { supabaseUrl, supabaseKey } from '../config/supabaseConfig.js';
+import { showNotification } from './ui.js';
+
+let supabase = null;
 let isAuthenticated = false;
 
 export async function initSupabase() {
+  if (supabase) return; // Evitar reinicialización
   if (!window.supabase) {
     console.error('Librería de Supabase no cargada');
     showNotification('Error: Supabase no está disponible', 'error');
-    return;
+    return false;
   }
   try {
     supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
     console.log('Supabase inicializado correctamente');
+    return true;
   } catch (error) {
     console.error('Error al inicializar Supabase:', error);
     showNotification('Error al conectar con Supabase', 'error');
+    return false;
   }
 }
 
@@ -31,6 +36,11 @@ export async function login() {
   const password = document.getElementById('password').value;
 
   console.log('Intentando login con:', { username, password });
+
+  if (!supabase) {
+    const initialized = await initSupabase();
+    if (!initialized) return false;
+  }
 
   try {
     const { data, error } = await supabase
@@ -82,6 +92,9 @@ export function logout() {
   document.getElementById('password').value = '';
 }
 
-export function getSupabase() {
+export async function getSupabase() {
+  if (!supabase) {
+    await initSupabase();
+  }
   return supabase;
 }

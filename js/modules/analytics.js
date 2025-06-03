@@ -1,7 +1,7 @@
+
 import { getSupabase } from './auth.js';
 import { showNotification } from './ui.js';
 
-const supabase = getSupabase();
 let categoryChartInstance = null;
 let stockChartInstance = null;
 
@@ -11,6 +11,7 @@ export async function updateCharts() {
 }
 
 async function updateCategoryChart() {
+  const supabase = await getSupabase();
   try {
     const ctx = document.getElementById('categoryChart').getContext('2d');
     
@@ -65,6 +66,7 @@ async function updateCategoryChart() {
 }
 
 async function updateStockChart() {
+  const supabase = await getSupabase();
   try {
     const ctx = document.getElementById('stockChart').getContext('2d');
     

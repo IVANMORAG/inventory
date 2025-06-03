@@ -1,3 +1,4 @@
+
 export function updateTime() {
   const now = new Date();
   document.getElementById('current-time').textContent = now.toLocaleTimeString();
@@ -15,10 +16,10 @@ export function showNotification(message, type = 'success') {
   }, 3000);
 }
 
-export function setupTabs(showTabCallback) {
+export function setupTabs() {
   document.querySelectorAll('.tab-btn').forEach(btn => {
     const tabName = btn.id.replace('tab-', '');
-    btn.addEventListener('click', () => showTabCallback(tabName));
+    btn.addEventListener('click', () => showTab(tabName));
   });
 }
 

@@ -1,9 +1,9 @@
+
 import { getSupabase } from './auth.js';
 import { showNotification } from './ui.js';
 
-const supabase = getSupabase();
-
 export async function loadWeeklyReports() {
+  const supabase = await getSupabase();
   try {
     const { data: reports, error } = await supabase
       .from('weekly_reports')
@@ -43,6 +43,7 @@ export async function loadWeeklyReports() {
 }
 
 async function downloadWeeklyReport(reportId) {
+  const supabase = await getSupabase();
   try {
     const { data: report, error } = await supabase
       .from('weekly_reports')
@@ -110,6 +111,7 @@ async function downloadWeeklyReport(reportId) {
 }
 
 export async function generateWeeklyReport() {
+  const supabase = await getSupabase();
   try {
     const { data: products, error: productError } = await supabase
       .from('products')

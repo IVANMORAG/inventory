@@ -1,3 +1,4 @@
+
 import { initSupabase, checkAuth, login, logout } from './modules/auth.js';
 import { addCategory, loadCategories } from './modules/categories.js';
 import { addProduct, loadProducts, filterProducts, updateStats } from './modules/products.js';
@@ -9,10 +10,17 @@ import { updateTime, setupTabs, showTab } from './modules/ui.js';
 let currentTab = 'categories';
 
 document.addEventListener('DOMContentLoaded', async () => {
-  await initSupabase();
-  
+  // Verificar si Supabase está disponible
+  const initialized = await initSupabase();
+  if (!initialized) {
+    showNotification('Error: Supabase no está disponible', 'error');
+    return;
+  }
+
+  // Configurar event listeners
   document.getElementById('login-button').addEventListener('click', async () => {
-    if (await login()) {
+    const success = await login();
+    if (success) {
       loadData();
     }
   });
@@ -24,29 +32,36 @@ document.addEventListener('DOMContentLoaded', async () => {
   document.getElementById('search-products').addEventListener('input', filterProducts);
   document.getElementById('filter-category').addEventListener('change', filterProducts);
 
+  // Verificar autenticación
   checkAuth();
-  setupTabs((tabName) => {
-    showTab(tabName);
-    currentTab = tabName;
-    if (tabName === 'analytics') {
+
+  // Configurar tabs
+  setupTabs();
+  setupTabs(() => {
+    showTab(currentTab);
+    if (currentTab === 'analytics') {
       setTimeout(updateCharts, 100);
-    } else if (tabName === 'weekly-reports') {
+    } else if (currentTab === 'weekly-reports') {
       loadWeeklyReports();
     }
   });
 
+  // Iniciar reloj
   updateTime();
   setInterval(updateTime, 1000);
 
+  // Cargar datos si está autenticado
   if (sessionStorage.getItem('isAuthenticated') === 'true') {
     loadData();
   }
 });
 
+// Función principal para cargar datos
 async function loadData() {
-  await loadCategories();
-  await loadProducts();
-  await updateStats();
+  loadCategories();
+  loadProducts();
+  updateStats();
   showTab('categories');
+  updateTime();
   scheduleWeeklyReport();
 }

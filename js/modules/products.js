@@ -1,9 +1,9 @@
+
 import { getSupabase } from './auth.js';
 import { showNotification } from './ui.js';
 
-const supabase = getSupabase();
-
 export async function addProduct() {
+  const supabase = await getSupabase();
   const name = document.getElementById('product-name').value.trim();
   const categoryId = parseInt(document.getElementById('product-category').value);
   const stock = parseInt(document.getElementById('product-stock').value);
@@ -42,6 +42,7 @@ export async function loadProducts() {
 }
 
 export async function filterProducts() {
+  const supabase = await getSupabase();
   const searchTerm = document.getElementById('search-products').value.toLowerCase();
   const categoryFilter = document.getElementById('filter-category').value;
   const productList = document.getElementById('product-list');
@@ -108,6 +109,7 @@ export async function filterProducts() {
 }
 
 async function updateStock(id, change) {
+  const supabase = await getSupabase();
   try {
     const { data: product, error: fetchError } = await supabase
       .from('products')
@@ -143,6 +145,7 @@ async function updateStock(id, change) {
 }
 
 async function deleteProduct(id) {
+  const supabase = await getSupabase();
   if (!confirm('¿Estás seguro de eliminar este producto?')) return;
   
   try {
@@ -163,6 +166,7 @@ async function deleteProduct(id) {
 }
 
 export async function updateStats() {
+  const supabase = await getSupabase();
   try {
     const { data: products, error: productError } = await supabase
       .from('products')

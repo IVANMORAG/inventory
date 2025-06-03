@@ -1,10 +1,10 @@
+
 import { getSupabase } from './auth.js';
 import { loadProducts, updateStats } from './products.js';
 import { showNotification } from './ui.js';
 
-const supabase = getSupabase();
-
 export async function addCategory() {
+  const supabase = await getSupabase();
   const name = document.getElementById('category-name').value.trim();
   if (!name) {
     showNotification('Por favor, ingresa un nombre para la categoría.', 'error');
@@ -29,6 +29,7 @@ export async function addCategory() {
 }
 
 export async function loadCategories() {
+  const supabase = await getSupabase();
   try {
     const { data: categories, error } = await supabase
       .from('categories')
@@ -80,6 +81,7 @@ export async function loadCategories() {
 }
 
 async function deleteCategory(id) {
+  const supabase = await getSupabase();
   if (!confirm('¿Estás seguro de eliminar esta categoría? Los productos asociados también se eliminarán.')) return;
   
   try {

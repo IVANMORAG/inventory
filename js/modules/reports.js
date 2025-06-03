@@ -1,9 +1,9 @@
+
 import { getSupabase } from './auth.js';
 import { showNotification } from './ui.js';
 
-const supabase = getSupabase();
-
 export async function generateReport() {
+  const supabase = await getSupabase();
   const filter = document.getElementById('report-filter').value;
   const reportBody = document.getElementById('report-body');
   reportBody.innerHTML = '';
@@ -52,6 +52,7 @@ export async function generateReport() {
 }
 
 export async function downloadPDF() {
+  const supabase = await getSupabase();
   try {
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF();
