@@ -1,0 +1,2 @@
+export const supabaseUrl = 'https://rvpvhkiwmylyysaeyght.supabase.co';
+export const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ2cHZoa2l3bXlseXlzYWV5Z2h0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDg0NzY1MjksImV4cCI6MjA2NDA1MjUyOX0.rSLaSbOhsLDYBMS3T0kj_7ZDVZl0IsepLneOcF39rqY';
