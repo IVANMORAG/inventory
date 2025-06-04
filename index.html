@@ -118,7 +118,7 @@
             📦 Productos
           </button>
           <button id="tab-reports" class="tab-btn flex-1 py-3 px-6 rounded-lg text-white/70 hover:text-white transition-all duration-300">
-            📊 Report miten
+            📊 Reportes
           </button>
           <button id="tab-analytics" class="tab-btn flex-1 py-3 px-6 rounded-lg text-white/70 hover:text-white transition-all duration-300">
             📈 Analytics
@@ -171,16 +171,6 @@
               <input id="product-min-stock" type="number" step="0.01" class="w-full p-3 bg-white/20 border border-white/30 rounded-lg text-white placeholder-white/50 backdrop-blur-sm" placeholder="5">
             </div>
             <div>
-              <label class="block text-white/90 mb-2">Unidad</label>
-              <select id="product-unit" class="w-full p-3 bg-white/20 border border-white/30 rounded-lg text-white backdrop-blur-sm">
-                <option value="unit">Unidad</option>
-                <option value="liter">Litro</option>
-                <option value="kg">Kilogramo</option>
-                <option value="pack">Paquete</option>
-                <option value="box">Caja</option>
-              </select>
-            </div>
-            <div>
               <label class="block text-white/90 mb-2">Descripción</label>
               <input id="product-description" type="text" class="w-full p-3 bg-white/20 border border-white/30 rounded-lg text-white placeholder-white/50 backdrop-blur-sm" placeholder="Descripción">
             </div>
@@ -228,7 +218,6 @@
                   <th class="p-4 text-left text-white">Producto</th>
                   <th class="p-4 text-left text-white">Categoría</th>
                   <th class="p-4 text-left text-white">Stock</th>
-                  <th class="p-4 text-left text-white">Unidad</th>
                   <th class="p-4 text-left text-white">Descripción</th>
                   <th class="p-4 text-left text-white">Estado</th>
                 </tr>
@@ -266,11 +255,46 @@
           <div id="weekly-reports-list"></div>
         </div>
       </div>
-    </div>
-  </div>
 
-  <!-- Notifications -->
-  <div id="notifications" class="fixed top-4 right-4 z-50"></div>
+      <!-- Edit Product Form -->
+      <div id="edit-product-form" class="fixed inset-0 bg-black/50 flex items-center justify-center hidden z-50">
+        <div class="glass-effect p-8 rounded-2xl w-full max-w-lg">
+          <h2 class="text-2xl font-bold text-white mb-6">Editar Producto</h2>
+          <div class="grid gap-4">
+            <div>
+              <label class="block text-white/90 mb-2">Nombre del Producto</label>
+              <input id="edit-product-name" type="text" class="w-full p-3 bg-white/20 border border-white/30 rounded-lg text-white placeholder-white/50 backdrop-blur-sm">
+            </div>
+            <div>
+              <label class="block text-white/90 mb-2">Categoría</label>
+              <select id="edit-product-category" class="w-full p-3 bg-white/20 border border-white/30 rounded-lg text-white backdrop-blur-sm"></select>
+            </div>
+            <div>
+              <label class="block text-white/90 mb-2">Existencias</label>
+              <input id="edit-product-stock" type="number" step="0.01" class="w-full p-3 bg-white/20 border border-white/30 rounded-lg text-white placeholder-white/50 backdrop-blur-sm">
+            </div>
+            <div>
+              <label class="block text-white/90 mb-2">Stock Mínimo</label>
+              <input id="edit-product-min-stock" type="number" step="0.01" class="w-full p-3 bg-white/20 border border-white/30 rounded-lg text-white placeholder-white/50 backdrop-blur-sm">
+            </div>
+            <div>
+              <label class="block text-white/90 mb-2">Descripción</label>
+              <input id="edit-product-description" type="text" class="w-full p-3 bg-white/20 border border-white/30 rounded-lg text-white placeholder-white/50 backdrop-blur-sm">
+            </div>
+          </div>
+          <div class="flex gap-4 mt-6">
+            <button id="save-product-changes" class="bg-green-500/80 backdrop-blur-sm text-white px-6 py-3 rounded-lg hover:bg-green-600 transition-all duration-300">
+              Guardar
+            </button>
+            <button id="cancel-edit-product" class="bg-red-500/80 backdrop-blur-sm text-white px-6 py-3 rounded-lg hover:bg-red-600 transition-all duration-300">
+              Cancelar
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Notifications -->
+      <div id="notifications" class="fixed top-4 right-4 z-50"></div>
 
   <script>
     // Variables globales
@@ -387,7 +411,7 @@
     function updateTime() {
       const now = new Date();
       document.getElementById('current-time').textContent = now.toLocaleTimeString();
-      document.getElementById('current-date').textContent = now.toLocaleDateString();
+      document.getElementById('current-date').textContent = new Date().toLocaleDateString('es-MX', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
     }
 
     function showNotification(message, type = 'success') {
@@ -544,7 +568,6 @@
       const categoryId = parseInt(document.getElementById('product-category').value);
       const stock = parseFloat(document.getElementById('product-stock').value);
       const minStock = parseFloat(document.getElementById('product-min-stock').value) || 5;
-      const unit = document.getElementById('product-unit').value;
       const description = document.getElementById('product-description').value.trim();
 
       if (!name || !categoryId || isNaN(stock) || stock < 0) {
@@ -555,7 +578,7 @@
       try {
         const { error } = await supabase
           .from('products')
-          .insert([{ name, category_id: categoryId, stock, min_stock: minStock, unit, description }]);
+          .insert([{ name, category_id: categoryId, stock, min_stock: minStock, description }]);
         
         if (error) throw error;
 
@@ -563,7 +586,6 @@
         document.getElementById('product-category').value = '';
         document.getElementById('product-stock').value = '';
         document.getElementById('product-min-stock').value = '';
-        document.getElementById('product-unit').value = 'unit';
         document.getElementById('product-description').value = '';
         
         await loadProducts();
@@ -585,32 +607,97 @@
         
         if (fetchError) throw fetchError;
 
-        const newName = prompt('Nuevo nombre del producto:', product.name);
-        const newCategoryId = prompt('ID de la nueva categoría:', product.category_id);
-        
-        if (newName === null || newCategoryId === null) return;
+        // Llenar el formulario con los datos del producto
+        document.getElementById('edit-product-name').value = product.name;
+        document.getElementById('edit-product-stock').value = product.stock;
+        document.getElementById('edit-product-min-stock').value = product.min_stock;
+        document.getElementById('edit-product-description').value = product.description || '';
 
-        const updates = {};
-        if (newName && newName.trim() !== product.name) updates.name = newName.trim();
-        if (newCategoryId && !isNaN(parseInt(newCategoryId)) && parseInt(newCategoryId) !== product.category_id) {
-          updates.category_id = parseInt(newCategoryId);
-        }
-
-        if (Object.keys(updates).length === 0) {
-          showNotification('No se hicieron cambios.', 'warning');
-          return;
-        }
-
-        const { error } = await supabase
-          .from('products')
-          .update(updates)
-          .eq('id', id);
+        // Cargar las categorías en el select
+        const { data: categories, error: categoryError } = await supabase
+          .from('categories')
+          .select('*');
         
-        if (error) throw error;
-        
-        await loadProducts();
-        await updateStats();
-        showNotification('Producto actualizado exitosamente.');
+        if (categoryError) throw categoryError;
+
+        const categorySelect = document.getElementById('edit-product-category');
+        categorySelect.innerHTML = '';
+        categories.forEach(category => {
+          const option = document.createElement('option');
+          option.value = category.id;
+          option.textContent = category.name;
+          if (category.id === product.category_id) option.selected = true;
+          categorySelect.appendChild(option);
+        });
+
+        // Mostrar el formulario
+        const form = document.getElementById('edit-product-form');
+        form.classList.remove('hidden');
+
+        // Manejar el botón de guardar
+        const saveButton = document.getElementById('save-product-changes');
+        const cancelButton = document.getElementById('cancel-edit-product');
+
+        const saveHandler = async () => {
+          const newName = document.getElementById('edit-product-name').value.trim();
+          const newCategoryId = parseInt(document.getElementById('edit-product-category').value);
+          const newStock = parseFloat(document.getElementById('edit-product-stock').value);
+          const newMinStock = parseFloat(document.getElementById('edit-product-min-stock').value);
+          const newDescription = document.getElementById('edit-product-description').value.trim();
+
+          if (!newName || isNaN(newCategoryId) || isNaN(newStock) || isNaN(newMinStock)) {
+            showNotification('Por favor, completa todos los campos correctamente.', 'error');
+            return;
+          }
+
+          if (newStock < 0) {
+            showNotification('El stock no puede ser negativo.', 'error');
+            return;
+          }
+
+          if (newMinStock < 0) {
+            showNotification('El stock mínimo no puede ser negativo.', 'error');
+            return;
+          }
+
+          const updates = {};
+          if (newName !== product.name) updates.name = newName;
+          if (newCategoryId !== product.category_id) updates.category_id = newCategoryId;
+          if (newStock !== product.stock) updates.stock = newStock;
+          if (newMinStock !== product.min_stock) updates.min_stock = newMinStock;
+          if (newDescription !== (product.description || '')) updates.description = newDescription || null;
+
+          if (Object.keys(updates).length === 0) {
+            showNotification('No se hicieron cambios.', 'warning');
+            form.classList.add('hidden');
+            saveButton.removeEventListener('click', saveHandler);
+            cancelButton.removeEventListener('click', cancelHandler);
+            return;
+          }
+
+          const { error } = await supabase
+            .from('products')
+            .update(updates)
+            .eq('id', id);
+          
+          if (error) throw error;
+          
+          await loadProducts();
+          await updateStats();
+          showNotification('Producto actualizado exitosamente.');
+          form.classList.add('hidden');
+          saveButton.removeEventListener('click', saveHandler);
+          cancelButton.removeEventListener('click', cancelHandler);
+        };
+
+        const cancelHandler = () => {
+          form.classList.add('hidden');
+          saveButton.removeEventListener('click', saveHandler);
+          cancelButton.removeEventListener('click', cancelHandler);
+        };
+
+        saveButton.addEventListener('click', saveHandler);
+        cancelButton.addEventListener('click', cancelHandler);
       } catch (error) {
         console.error('Error al editar producto:', error);
         showNotification('Error al editar producto: ' + error.message, 'error');
@@ -655,8 +742,8 @@
                 <span class="text-xs bg-white/20 px-2 py-1 rounded">${categoryName}</span>
               </div>
               <div class="grid grid-cols-2 gap-2 text-sm mb-4">
-                <div>Stock: <span class="${isLowStock ? 'text-red-300 font-bold' : 'text-green-300'}">${product.stock} ${product.unit}</span></div>
-                <div>Mín: ${product.min_stock} ${product.unit}</div>
+                <div>Stock: <span class="${isLowStock ? 'text-red-300 font-bold' : 'text-green-300'}">${product.stock}</span></div>
+                <div>Mín: <span class="font-bold text-yellow-300">${product.min_stock}</span></div>
               </div>
               ${product.description ? `<p class="text-white/70 text-sm mb-4">${product.description}</p>` : ''}
               ${isLowStock ? '<div class="bg-red-500/50 text-white text-xs p-2 rounded mb-4">⚠️ Stock Bajo</div>' : ''}
@@ -721,7 +808,7 @@
         await updateStats();
         
         if (newStock <= product.min_stock) {
-          showNotification(`¡Alerta! El producto "${product.name}" tiene stock bajo (${newStock} ${product.unit}).`, 'error');
+          showNotification(`¡Alerta! El producto "${product.name}" tiene stock bajo (${newStock}).`, 'error');
         }
       } catch (error) {
         console.error('Error al actualizar stock:', error);
@@ -807,8 +894,7 @@
           row.innerHTML = `
             <td class="p-4">${product.name}</td>
             <td class="p-4">${categoryName}</td>
-            <td class="p-4 ${isLowStock ? 'text-red-300 font-bold' : ''}">${product.stock} ${product.unit}</td>
-            <td class="p-4">${product.unit}</td>
+            <td class="p-4 ${isLowStock ? 'text-red-300 font-bold' : ''}">${product.stock}</td>
             <td class="p-4">${product.description || 'N/A'}</td>
             <td class="p-4">
               <span class="px-2 py-1 rounded text-xs ${product.stock === 0 ? 'bg-gray-500/50' : isLowStock ? 'bg-red-500/50' : 'bg-green-500/50'}">
@@ -876,15 +962,14 @@
           return [
             product.name,
             categoryName,
-            `${product.stock} ${product.unit}`,
-            product.unit,
+            `${product.stock}`,
             product.description || 'N/A',
             status
           ];
         });
         
         doc.autoTable({
-          head: [['Producto', 'Categoría', 'Stock', 'Unidad', 'Descripción', 'Estado']],
+          head: [['Producto', 'Categoría', 'Stock', 'Descripción', 'Estado']],
           body: tableData,
           startY: 100,
           styles: {
@@ -900,8 +985,7 @@
           },
           columnStyles: {
             2: { halign: 'center' },
-            3: { halign: 'center' },
-            5: { halign: 'center' }
+            4: { halign: 'center' }
           }
         });
         
@@ -1117,14 +1201,13 @@
         const tableData = report.report_data.products.map(product => [
           product.name,
           product.category,
-          `${product.stock} ${product.unit}`,
-          product.unit,
+          `${product.stock}`,
           product.description,
           product.status
         ]);
         
         doc.autoTable({
-          head: [['Producto', 'Categoría', 'Stock', 'Unidad', 'Descripción', 'Estado']],
+          head: [['Producto', 'Categoría', 'Stock', 'Descripción', 'Estado']],
           body: tableData,
           startY: 100,
           styles: {
@@ -1140,8 +1223,7 @@
           },
           columnStyles: {
             2: { halign: 'center' },
-            3: { halign: 'center' },
-            5: { halign: 'center' }
+            4: { halign: 'center' }
           }
         });
         
@@ -1204,7 +1286,6 @@
             name: product.name,
             category: product.categories?.name || 'Sin categoría',
             stock: product.stock,
-            unit: product.unit || 'unit',
             min_stock: product.min_stock,
             description: product.description || 'N/A',
             status: product.stock === 0 ? 'Sin Stock' : 
